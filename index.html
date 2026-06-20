@@ -82,6 +82,11 @@
   .tag{position:absolute;top:14px;right:16px;background:#0b1020cc;border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--muted)}
   .tt{position:absolute;pointer-events:none;background:#0b1020ee;border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:12px;opacity:0;transition:.1s;transform:translate(-50%,-120%)}
   .disc{font-size:10.5px;color:var(--muted);line-height:1.5}
+  .parts{display:flex;gap:8px;margin-top:6px}
+  .chk{flex:1;display:flex;align-items:center;gap:6px;justify-content:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 6px;font-size:12px;cursor:pointer;user-select:none}
+  .chk input{accent-color:var(--accent);margin:0}
+  .chk.off{opacity:.45}
+  body.cb{--cheap:#0072B2;--mid:#E6C229;--exp:#D55E00;--free:#0072B2;--voa:#56B4E9;--evisa:#E69F00;--embassy:#D55E00}
 </style>
 </head>
 <body>
@@ -101,16 +106,23 @@
     </div>
 
     <div class="sticky pad">
-      <label style="margin-top:0">Budget — all‑in trip cost (flight + visa + <span id="nN">7</span>‑night stay), per person</label>
+      <label style="margin-top:0">Budget — <span id="budgetLabel">flight + visa + stay</span>, per person</label>
       <div class="bignum">₹<span id="budgetVal">—</span> <small>or less</small></div>
       <input type="range" id="budget" min="0" max="300000" value="300000" step="1000">
       <div class="summary"><b id="cnt">—</b> of <span id="tot">—</span> fit · cheapest <b id="cheapest">—</b></div>
       <button class="surprise" id="surprise">🎲 Surprise me — a place I can afford</button>
+      <label style="margin-top:12px">Count toward budget — pick what matters to you</label>
+      <div class="parts" id="parts">
+        <label class="chk"><input type="checkbox" data-p="flight" checked><span>✈ Flights</span></label>
+        <label class="chk"><input type="checkbox" data-p="visa" checked><span>🛂 Visa</span></label>
+        <label class="chk"><input type="checkbox" data-p="stay" checked><span>🏨 Stay</span></label>
+      </div>
       <label style="margin-top:12px">Continent</label>
       <div class="chips" id="continents"></div>
       <div class="chips" id="filters" style="margin-top:8px">
         <div class="chip" data-f="visafree">🟢 Visa‑free only</div>
         <div class="chip" data-f="nonstop">✈ Nonstop only</div>
+        <div class="chip" id="cbChip">👁 Colour‑blind</div>
       </div>
       <label style="margin-top:12px">Sort by</label>
       <div class="toggle" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div>
@@ -218,7 +230,7 @@ const DEST=[
   visa:{t:"evisa",cost:1200,time:"5–10 days",approval:88,note:"Australia Visitor visa (subclass 600) online."}},
 ];
 
-let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",open:new Set(),flash:null,init:false};
+let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,init:false};
 
 const svg=d3.select("#map"),W=1000,H=720;
 let projection=d3.geoNaturalEarth1();
@@ -237,7 +249,8 @@ function compute(){
   return DEST.map((d,i)=>{
     const wob=1+(((seed*(i+7))%9)-4)/100;
     const fa=d.flights.map(f=>({...f,price:Math.round(f.price*oF*wob*(state.trip==="oneway"?0.56:1)/10)*10})).sort((a,b)=>a.price-b.price);
-    const flight=fa[0].price, stay=N*d.daily, allIn=flight+d.visa.cost+stay;
+    const flight=fa[0].price, stay=N*d.daily;
+    const allIn=(state.parts.flight?flight:0)+(state.parts.visa?d.visa.cost:0)+(state.parts.stay?stay:0);
     return {...d,flights:fa,flight,stay,allIn,hasNonstop:d.flights.some(f=>f.ns)};
   });
 }
@@ -274,14 +287,20 @@ function arcPath(a,b){
 
 function render(){
   const o=ORIGINS[state.origin];
-  let data=compute().filter(passFilters);
+  const full=compute();
+  let data=full.filter(passFilters);
+  // keep budget slider range in sync with what's actually counted
+  const bEl=document.getElementById("budget");const gmax=Math.ceil((Math.max(...full.map(d=>d.allIn))||1000)/1000)*1000;
+  bEl.max=gmax; if(state.budget>gmax){state.budget=gmax;bEl.value=gmax;}
   if(!data.length){document.getElementById("list").innerHTML='<p style="color:var(--muted);font-size:13px">No destinations match these filters.</p>';gArc.selectAll("*").remove();gPin.selectAll("g.pin").remove();return;}
   const lo=Math.min(...data.map(d=>d.allIn)),hi=Math.max(...data.map(d=>d.allIn));
-  color=d3.scaleLinear().domain([lo,(lo+hi)/2,hi]).range(["#28d17c","#ffd25b","#ff5e6c"]);
+  const PAL=state.cb?["#0072B2","#E6C229","#D55E00"]:["#28d17c","#ffd25b","#ff5e6c"];
+  color=d3.scaleLinear().domain([lo,(lo+hi)/2,hi]).range(PAL);
   const inB=d=>d.allIn<=state.budget;const fits=data.filter(inB);
   data.sort(sortFn);
 
-  document.getElementById("nN").textContent=nights();
+  const lbl=[];if(state.parts.flight)lbl.push("flight");if(state.parts.visa)lbl.push("visa");if(state.parts.stay)lbl.push(nights()+"‑night stay");
+  document.getElementById("budgetLabel").textContent=lbl.length?lbl.join(" + "):"nothing selected";
   document.getElementById("budgetVal").textContent=(+state.budget).toLocaleString("en-IN");
   document.getElementById("cnt").textContent=fits.length;
   document.getElementById("tot").textContent=data.length;
@@ -320,7 +339,7 @@ function render(){
           <div class="c1">${d.city} <span class="vbadge" style="background:${vb.color}22;color:${vb.color}">${vb.label}</span></div>
           <div class="c2">${d.country} · ${d.cont} · ${d.code}</div>
         </div>
-        <div class="price"><div class="all">${fmt(d.allIn)}</div><div class="brk">✈${fmt(d.flight)} ·🛂${d.visa.cost?fmt(d.visa.cost):"₹0"} ·🏨${fmt(d.stay)}</div></div>
+        <div class="price"><div class="all">${fmt(d.allIn)}</div><div class="brk">${[state.parts.flight?"✈"+fmt(d.flight):"",state.parts.visa?"🛂"+(d.visa.cost?fmt(d.visa.cost):"₹0"):"",state.parts.stay?"🏨"+fmt(d.stay):""].filter(Boolean).join(" ·")||"—"}</div></div>
         <span class="chev">▶</span>
       </div>
       <div class="body">
@@ -348,7 +367,9 @@ document.getElementById("return").onchange=e=>{state.ret=e.target.value;render()
 document.getElementById("budget").oninput=e=>{state.budget=+e.target.value;render()};
 document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;document.getElementById("return").disabled=state.trip==="oneway";render()});
 document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#sort button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.sort=b.dataset.s;render()});
-document.querySelectorAll("#filters .chip").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render()});
+document.querySelectorAll("#filters .chip[data-f]").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render()});
+document.querySelectorAll("#parts input").forEach(c=>c.onchange=()=>{state.parts[c.dataset.p]=c.checked;c.closest(".chk").classList.toggle("off",!c.checked);render()});
+document.getElementById("cbChip").onclick=function(){state.cb=!state.cb;this.classList.toggle("on",state.cb);document.body.classList.toggle("cb",state.cb);render()};
 document.getElementById("surprise").onclick=()=>{
   const fits=compute().filter(passFilters).filter(d=>d.allIn<=state.budget);
   if(!fits.length){alert("Nothing fits — raise the budget or clear filters.");return;}
