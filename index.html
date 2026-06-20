@@ -89,6 +89,14 @@
   .tag{position:absolute;top:14px;right:16px;background:#0b1020cc;border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--muted)}
   .tt{position:absolute;pointer-events:none;background:#0b1020ee;border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:12px;opacity:0;transition:.1s;transform:translate(-50%,-120%)}
   .disc{font-size:10.5px;color:var(--muted);line-height:1.5}
+  .incl{background:var(--card);border-radius:9px;padding:4px 10px;margin-bottom:8px}
+  .ir{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .ir:last-child{border-bottom:0}
+  .ir.mut{opacity:.4;text-decoration:line-through}
+  .ir.tot{font-weight:800;font-size:13px}.ir.tot span,.ir.tot b{color:var(--ink)}
+  .lv{font-style:normal;color:#28d17c;font-size:9px;border:1px solid #28d17c55;border-radius:6px;padding:0 4px;margin-left:5px}
+  .incnote{font-size:10px;color:var(--muted);margin:0 0 12px}
+  .india-off{fill:none;stroke:#0b1020;stroke-width:.8}
   body.cb{--cheap:#0072B2;--mid:#E6C229;--exp:#D55E00;--free:#0072B2;--voa:#56B4E9;--evisa:#E69F00;--embassy:#D55E00}
 </style>
 </head>
@@ -204,7 +212,7 @@ const DEST=[
  {code:"YVR",city:"Vancouver",country:"Canada",cont:"N. America",coord:[-123.18,49.19],base:92000,dur:900,daily:11000,visa:vz("embassy",8000,"2–4 weeks",70,"Canada visitor visa.")},
 ];
 
-let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,live:{flights:{},hotels:{},status:"loading"}};
+let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,prevRet:"2026-07-05",live:{flights:{},hotels:{},status:"loading"}};
 
 const svg=d3.select("#map"),W=1000,H=720;
 let projection=d3.geoNaturalEarth1();
@@ -218,7 +226,7 @@ const inB=d=>d.allIn<=state.budget;
 
 const zoom=d3.zoom().scaleExtent([1,8]).on("zoom",ev=>{cur=ev.transform;gRoot.attr("transform",cur);layout();});
 
-function nights(){const a=new Date(state.depart),b=new Date(state.ret);const n=Math.round((b-a)/864e5);return state.trip==="oneway"?7:(n>0?n:1);}
+function nights(){if(state.trip==="oneway"||!state.ret)return 0;const a=new Date(state.depart),b=new Date(state.ret);const n=Math.round((b-a)/864e5);return n>0?n:1;}
 function genFlights(base){return[{air:"Lowest fare",dep:"—",arr:"",dur:"varies",stops:"Nonstop",ns:1,price:base},{air:"Alt route",dep:"—",arr:"",dur:"varies",stops:"1 stop",ns:0,price:Math.round(base*1.12/10)*10}];}
 function compute(){
   const oF=state.origin==="DEL"?1:state.origin==="BOM"?1.06:1.12;
@@ -243,6 +251,8 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
   const c=topojson.feature(world,world.objects.countries);
   projection.fitExtent([[14,40],[986,700]],c);
   gMap.selectAll("path").data(c.features).join("path").attr("class","country").attr("d",path);
+  // overlay India's official boundary (Survey-of-India aligned, via datameet) — Indian map version
+  d3.json("https://raw.githubusercontent.com/datameet/maps/master/Country/india-land-simplified.geojson").then(ind=>{gMap.append("path").datum(ind).attr("class","india-off").attr("d",path);}).catch(()=>{});
   const cc=document.getElementById("continents");
   ["all",...CONTS].forEach(k=>{const el=document.createElement("div");el.className="chip"+(k==="all"?" on":"");el.textContent=k==="all"?"🌍 All":k;el.onclick=()=>{state.cont=k;[...cc.children].forEach(x=>x.classList.remove("on"));el.classList.add("on");render()};cc.appendChild(el)});
   const all=compute();const gm=Math.ceil(Math.max(...all.map(d=>d.allIn))/1000)*1000;
@@ -287,7 +297,7 @@ function render(){
   document.getElementById("cnt").textContent=fits.length;document.getElementById("tot").textContent=data.length;
   document.getElementById("cheapest").textContent=fits.length?(fits.reduce((m,d)=>d.allIn<m.allIn?d:m).city+" "+fmt(Math.min(...fits.map(d=>d.allIn)))):"— raise budget";
   document.getElementById("lo").textContent=fmt(lo);document.getElementById("hi").textContent=fmt(hi);
-  const lbl=[];if(state.parts.flight)lbl.push("flight");if(state.parts.visa)lbl.push("visa");if(state.parts.stay)lbl.push(nights()+"‑night stay");
+  const N=nights();const lbl=[];if(state.parts.flight)lbl.push("flight");if(state.parts.visa)lbl.push("visa");if(state.parts.stay&&N>0)lbl.push(N+"‑night stay");
   document.getElementById("budgetLabel").textContent=lbl.length?lbl.join(" + "):"nothing selected";
   document.getElementById("tag").textContent=(state.trip==="round"?"round trip":"one way")+" · "+nights()+" nights · "+fmtDate(state.depart);
   document.getElementById("fsum").innerHTML=`${state.cont==="all"?"🌍 All":state.cont} · ${["flight","visa","stay"].filter(p=>state.parts[p]).map(p=>({flight:"✈",visa:"🛂",stay:"🏨"}[p])).join("")||"—"} · ${ {cheap:"Cheapest",visa:"Easiest visa",fast:"Fastest"}[state.sort]}${state.visafree?" · visa‑free":""}${state.nonstop?" · nonstop":""}`;
@@ -337,9 +347,17 @@ function drawList(data){
         <span class="dot" style="background:${color(d.allIn)}"></span>
         <div class="cmeta"><div class="c1">${d.city} <span class="vbadge" style="background:${vb.color}22;color:${vb.color}">${vb.label}</span></div>
         <div class="c2">${d.country} · ${d.cont} · ${d.code}${d.fLive?' · <span style="color:#28d17c">live</span>':''}</div></div>
-        <div class="price"><div class="all">${fmt(d.allIn)}</div><div class="brk">${[state.parts.flight?"✈"+fmt(d.flight):"",state.parts.visa?"🛂"+(d.visa.cost?fmt(d.visa.cost):"₹0"):"",state.parts.stay?"🏨"+fmt(d.stay)+(d.stayLive?"":"*"):""].filter(Boolean).join(" ·")||"—"}</div></div>
+        <div class="price"><div class="all">${fmt(d.allIn)}</div><div class="brk">all‑in cost ›</div></div>
         <span class="chev">▶</span></div>
       <div class="body">
+        <div class="sech">💰 What's included in ${fmt(d.allIn)}</div>
+        <div class="incl">
+          <div class="ir ${state.parts.flight?'':'mut'}"><span>✈ Flight ${d.fLive?'<i class="lv">live</i>':'<i class="lv" style="color:#ffb13b;border-color:#ffb13b55">est</i>'}</span><b>${fmt(d.flight)}</b></div>
+          <div class="ir ${state.parts.visa?'':'mut'}"><span>🛂 Visa · ${vb.label}</span><b>${d.visa.cost?fmt(d.visa.cost):'Free'}</b></div>
+          <div class="ir ${state.parts.stay&&nights()>0?'':'mut'}"><span>🏨 Hotel ${nights()?nights()+' nights':'—'} ${nights()?(d.stayLive?'<i class="lv">live</i>':'<i class="lv" style="color:#ffb13b;border-color:#ffb13b55">est</i>'):''}</span><b>${nights()?fmt(d.stay):'—'}</b></div>
+          <div class="ir tot"><span>All‑in total</span><b>${fmt(d.allIn)}</b></div>
+        </div>
+        <div class="incnote">A row is struck‑through when you've turned it off under “Count toward budget”.</div>
         <div class="sech">✈ Top cheapest flights ${d.fLive?'<span style="color:#28d17c">· live</span>':''}</div>
         ${d.flights.slice(0,2).map(f=>`<div class="fl"><div class="air">${f.air}</div><div class="tm">${f.dep}${f.arr?" – "+f.arr:""}<small>${f.stops} · ${f.dur}</small></div><div class="fp">${fmt(f.price)}</div><a class="book" href="${f.link||"#"}" ${f.link?'target="_blank"':'onclick="return false"'}>Book</a></div>`).join("")}
         <div class="sech" style="margin-top:14px">🛂 Visa for Indian passport</div>
@@ -360,7 +378,7 @@ document.getElementById("origin").onchange=e=>{state.origin=e.target.value;rende
 document.getElementById("depart").onchange=e=>{state.depart=e.target.value;render();loadLive()};
 document.getElementById("return").onchange=e=>{state.ret=e.target.value;render();loadLive()};
 document.getElementById("budget").oninput=e=>{state.budget=+e.target.value;render()};
-document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;document.getElementById("return").disabled=state.trip==="oneway";render();loadLive();});
+document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;const r=document.getElementById("return");if(state.trip==="oneway"){if(state.ret)state.prevRet=state.ret;r.value="";r.disabled=true;state.ret="";}else{r.disabled=false;r.value=state.prevRet||"2026-07-05";state.ret=r.value;}render();loadLive();});
 document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#sort button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.sort=b.dataset.s;render();});
 document.querySelectorAll("#filters .chip[data-f]").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render();});
 document.querySelectorAll("#parts input").forEach(c=>c.onchange=()=>{state.parts[c.dataset.p]=c.checked;c.closest(".chk").classList.toggle("off",!c.checked);render();});
