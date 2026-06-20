@@ -14,7 +14,9 @@ const CITY = {
   MRU:"Port Louis",JNB:"Johannesburg",JFK:"New York",YYZ:"Toronto",GRU:"Sao Paulo",SYD:"Sydney",
   ALA:"Almaty",AUH:"Abu Dhabi",MCT:"Muscat",CGK:"Jakarta",HKG:"Hong Kong",ICN:"Seoul",
   PNH:"Phnom Penh",FCO:"Rome",AMS:"Amsterdam",GYD:"Baku",TBS:"Tbilisi",ZNZ:"Zanzibar",
-  SEZ:"Victoria",AKL:"Auckland",LAX:"Los Angeles",YVR:"Vancouver"
+  SEZ:"Victoria",AKL:"Auckland",LAX:"Los Angeles",YVR:"Vancouver",
+  GOI:"Goa",SXR:"Srinagar",IXL:"Leh",COK:"Kochi",MAA:"Chennai",BLR:"Bangalore",HYD:"Hyderabad",
+  BOM:"Mumbai",UDR:"Udaipur",JAI:"Jaipur",VNS:"Varanasi",CCU:"Kolkata",GAU:"Guwahati",IXZ:"Port Blair"
 };
 
 export default async function handler(req, res) {

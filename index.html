@@ -341,7 +341,7 @@ function setStatus(s){
 function render(){
   const o=ORIGINS[state.origin];
   const full=compute();let data=full.filter(passFilters);
-  const bEl=document.getElementById("budget");const gmax=Math.ceil((Math.max(...full.map(d=>d.allIn))||1000)/1000)*1000;
+  const bEl=document.getElementById("budget");const gmax=state.trip==="oneway"?99000:Math.ceil((Math.max(...full.map(d=>d.allIn))||1000)/1000)*1000;
   bEl.max=gmax;if(state.budget>gmax){state.budget=gmax;bEl.value=gmax;}
   if(!data.length){document.getElementById("list").innerHTML='<p style="color:var(--muted);font-size:13px">No destinations match these filters.</p>';gArc.selectAll("*").remove();gDots.selectAll("circle.pin").remove();gLab.selectAll("*").remove();return;}
   const lo=Math.min(...data.map(d=>d.allIn)),hi=Math.max(...data.map(d=>d.allIn));
@@ -449,7 +449,8 @@ document.getElementById("origin").onchange=e=>{state.origin=e.target.value;state
 document.getElementById("depart").onchange=e=>{state.depart=e.target.value;render();loadLive()};
 document.getElementById("return").onchange=e=>{state.ret=e.target.value;render();loadLive()};
 document.getElementById("budget").oninput=e=>{state.budget=+e.target.value;render()};
-document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;state.budget=9e9;const r=document.getElementById("return");if(state.trip==="oneway"){if(state.ret)state.prevRet=state.ret;r.value="";r.disabled=true;state.ret="";}else{r.disabled=false;r.value=state.prevRet||"2026-07-05";state.ret=r.value;}render();loadLive();});
+function syncParts(){document.querySelectorAll("#parts input").forEach(c=>{c.checked=!!state.parts[c.dataset.p];c.closest(".chk").classList.toggle("off",!c.checked);});}
+document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;state.budget=9e9;const r=document.getElementById("return");if(state.trip==="oneway"){if(state.ret)state.prevRet=state.ret;r.value="";r.disabled=true;state.ret="";state.prevParts={...state.parts};state.parts={flight:true,visa:false,stay:false};}else{r.disabled=false;r.value=state.prevRet||"2026-07-05";state.ret=r.value;state.parts=state.prevParts?{...state.prevParts}:{flight:true,visa:true,stay:true};}syncParts();render();loadLive();});
 document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#sort button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.sort=b.dataset.s;render();});
 document.querySelectorAll("#filters .chip[data-f]").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render();});
 document.querySelectorAll("#parts input").forEach(c=>c.onchange=()=>{state.parts[c.dataset.p]=c.checked;c.closest(".chk").classList.toggle("off",!c.checked);render();});
