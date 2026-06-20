@@ -6,17 +6,27 @@
 <title>FareMap — where can I afford to go?</title>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0b1020;--panel:#121a31;--panel2:#0f1730;--card:#152037;--ink:#e8ecf6;
-    --muted:#8a96b3;--line:#22304f;--accent:#5b8cff;
-    --cheap:#28d17c;--mid:#ffd25b;--exp:#ff5e6c;
-    --free:#28d17c;--voa:#2bc4c4;--evisa:#ffb13b;--embassy:#ff5e6c;
+    --bg:#080b16;--bg2:#0c1122;--panel:#0e1426;--panel2:#0b101f;--card:#141b30;--card2:#18213a;--ink:#eef1fa;
+    --muted:#8893b0;--line:#212c49;--line2:#2c3a5e;--accent:#6d8bff;--accent2:#9b7cff;
+    --cheap:#2ad17e;--mid:#ffd25b;--exp:#ff5e6c;
+    --free:#2ad17e;--voa:#2bc4c4;--evisa:#ffb13b;--embassy:#ff5e6c;
+    --shadow:0 8px 30px rgba(0,0,0,.45);--radius:14px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-  #app{display:grid;grid-template-columns:400px 1fr;height:100vh}
-  aside{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#1d2740;border-radius:9px;border:2px solid var(--panel)}
+  html,body{margin:0;height:100%;font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+    background:radial-gradient(1200px 600px at 75% -10%,#16203f 0%,transparent 55%),radial-gradient(900px 500px at 10% 110%,#1a1438 0%,transparent 50%),var(--bg)}
+  .topbar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-bottom:1px solid var(--line);background:rgba(10,14,26,.6);backdrop-filter:blur(10px)}
+  .brand{font-size:19px;font-weight:800;letter-spacing:-.4px}.brand span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .modeT{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:30px;padding:4px}
+  .modeT button{border:0;background:transparent;color:var(--muted);padding:8px 20px;border-radius:30px;cursor:pointer;font-size:13px;font-weight:700;transition:.18s;font-family:inherit}
+  .modeT button.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(109,139,255,.4)}
+  #app{display:grid;grid-template-columns:408px 1fr;grid-template-rows:auto 1fr;height:100vh}
+  aside{background:linear-gradient(180deg,var(--panel),var(--bg2));border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
   .pad{padding:16px 20px}
   .scroll{overflow-y:auto;flex:1;min-height:0}
   h1{font-size:20px;margin:0 0 2px;letter-spacing:-.3px}h1 span{color:var(--accent)}
@@ -102,13 +112,16 @@
 </head>
 <body>
 <div id="app">
+  <div class="topbar">
+    <div class="brand">Fare<span>Map</span></div>
+    <div class="modeT" id="mode"><button data-m="intl" class="on">🌍 International</button><button data-m="dom">🇮🇳 Domestic</button></div>
+    <span class="pill loading" id="status">Fetching live prices…</span>
+  </div>
   <aside>
     <div class="pad">
-      <h1>Fare<span>Map</span></h1>
-      <p class="sub">Where can an Indian traveller afford to go — worldwide?</p>
-      <span class="pill loading" id="status">Fetching live prices…</span>
+      <p class="sub" id="sub">Where can you afford to go — worldwide?</p>
       <div class="row" style="margin-top:10px">
-        <div><label>From</label><select id="origin"><option value="DEL">New Delhi (DEL)</option><option value="BOM">Mumbai (BOM)</option><option value="BLR">Bengaluru (BLR)</option></select></div>
+        <div><label>From</label><select id="origin"></select></div>
         <div><label>Trip</label><div class="toggle" id="trip"><button data-t="round" class="on">Round</button><button data-t="oneway">One‑way</button></div></div>
       </div>
       <div class="row">
@@ -133,7 +146,7 @@
           <label class="chk"><input type="checkbox" data-p="visa" checked><span>🛂 Visa</span></label>
           <label class="chk"><input type="checkbox" data-p="stay" checked><span>🏨 Stay</span></label>
         </div>
-        <label style="margin-top:12px">Continent</label>
+        <label style="margin-top:12px" id="contLabel">Continent</label>
         <div class="chips" id="continents"></div>
         <div class="chips" id="filters">
           <div class="chip" data-f="visafree">🟢 Visa‑free only</div>
@@ -163,10 +176,16 @@
 </div>
 
 <script>
-const ORIGINS={DEL:{name:"New Delhi",coord:[77.10,28.56]},BOM:{name:"Mumbai",coord:[72.87,19.09]},BLR:{name:"Bengaluru",coord:[77.71,13.20]}};
-const V={free:{label:"Visa‑free",color:"var(--free)",ease:0},voa:{label:"On arrival",color:"var(--voa)",ease:1},evisa:{label:"e‑Visa",color:"var(--evisa)",ease:2},embassy:{label:"Embassy visa",color:"var(--embassy)",ease:3}};
+const ORIGINS={
+  DEL:{name:"New Delhi",coord:[77.10,28.56]},BOM:{name:"Mumbai",coord:[72.87,19.09]},BLR:{name:"Bengaluru",coord:[77.71,13.20]},
+  HYD:{name:"Hyderabad",coord:[78.43,17.24]},MAA:{name:"Chennai",coord:[80.16,12.99]},CCU:{name:"Kolkata",coord:[88.45,22.65]},
+  AMD:{name:"Ahmedabad",coord:[72.63,23.07]},PNQ:{name:"Pune",coord:[73.92,18.58]},COK:{name:"Kochi",coord:[76.39,10.15]},
+  GOI:{name:"Goa",coord:[73.83,15.38]},JAI:{name:"Jaipur",coord:[75.80,26.82]},LKO:{name:"Lucknow",coord:[80.89,26.76]},IXC:{name:"Chandigarh",coord:[76.79,30.67]}
+};
+const V={free:{label:"Visa‑free",color:"var(--free)",ease:0},voa:{label:"On arrival",color:"var(--voa)",ease:1},evisa:{label:"e‑Visa",color:"var(--evisa)",ease:2},embassy:{label:"Embassy visa",color:"var(--embassy)",ease:3},dom:{label:"Domestic",color:"var(--accent)",ease:0}};
 const CONTS=["Asia","Africa","Europe","Oceania","N. America","S. America"];
-function vz(t,cost,time,approval,note){return{t,cost,time,approval,note}}
+const VISA_ASOF="Jun 2026";
+function vz(t,cost,time,approval,note,lv){return{t,cost,time,approval,note,lv:lv||VISA_ASOF}}
 // base=fallback round-trip ₹ from DEL · dur=min nonstop minutes · daily=est ₹/day (fallback)
 const DEST=[
  {code:"KTM",city:"Kathmandu",country:"Nepal",cont:"Asia",coord:[85.36,27.70],base:21280,dur:100,daily:2000,flights:[{air:"IndiGo",dep:"11:10",arr:"13:05",dur:"1h 40m",stops:"Nonstop",ns:1,price:21280},{air:"Air India",dep:"07:00",arr:"09:05",dur:"1h 50m",stops:"Nonstop",ns:1,price:23707}],visa:vz("free",0,"Not required",99,"Indians need no visa for Nepal.")},
@@ -211,8 +230,28 @@ const DEST=[
  {code:"LAX",city:"Los Angeles",country:"USA",cont:"N. America",coord:[-118.41,33.94],base:100000,dur:1000,daily:14000,visa:vz("embassy",16000,"long wait",75,"US B1/B2 interview.")},
  {code:"YVR",city:"Vancouver",country:"Canada",cont:"N. America",coord:[-123.18,49.19],base:92000,dur:900,daily:11000,visa:vz("embassy",8000,"2–4 weeks",70,"Canada visitor visa.")},
 ];
+// Domestic India destinations (no visa). cont used as region label.
+const dv=vz("dom",0,"Not required",100,"Domestic — no visa needed.");
+const DOM_DEST=[
+ {code:"GOI",city:"Goa",country:"India",cont:"West",coord:[73.83,15.38],base:9000,dur:150,daily:3500,visa:dv},
+ {code:"SXR",city:"Srinagar",country:"India",cont:"North",coord:[74.77,33.99],base:11000,dur:80,daily:3000,visa:dv},
+ {code:"IXL",city:"Leh",country:"India",cont:"North",coord:[77.55,34.14],base:13000,dur:80,daily:3500,visa:dv},
+ {code:"COK",city:"Kochi",country:"India",cont:"South",coord:[76.39,10.15],base:10000,dur:200,daily:3000,visa:dv},
+ {code:"MAA",city:"Chennai",country:"India",cont:"South",coord:[80.16,12.99],base:8500,dur:165,daily:3000,visa:dv},
+ {code:"BLR",city:"Bengaluru",country:"India",cont:"South",coord:[77.71,13.20],base:8000,dur:150,daily:3500,visa:dv},
+ {code:"HYD",city:"Hyderabad",country:"India",cont:"South",coord:[78.43,17.24],base:7500,dur:130,daily:3000,visa:dv},
+ {code:"BOM",city:"Mumbai",country:"India",cont:"West",coord:[72.87,19.09],base:7000,dur:130,daily:4000,visa:dv},
+ {code:"UDR",city:"Udaipur",country:"India",cont:"West",coord:[73.90,24.62],base:9000,dur:90,daily:3500,visa:dv},
+ {code:"JAI",city:"Jaipur",country:"India",cont:"North",coord:[75.80,26.82],base:6000,dur:60,daily:3000,visa:dv},
+ {code:"VNS",city:"Varanasi",country:"India",cont:"North",coord:[82.86,25.45],base:7500,dur:90,daily:2500,visa:dv},
+ {code:"CCU",city:"Kolkata",country:"India",cont:"East",coord:[88.45,22.65],base:8500,dur:140,daily:3000,visa:dv},
+ {code:"GAU",city:"Guwahati",country:"India",cont:"East",coord:[91.59,26.11],base:9500,dur:150,daily:2500,visa:dv},
+ {code:"IXZ",city:"Port Blair",country:"India",cont:"Islands",coord:[92.73,11.64],base:14000,dur:300,daily:4500,visa:dv},
+];
+const REGIONS=["North","South","East","West","Islands"];
 
-let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,prevRet:"2026-07-05",live:{flights:{},hotels:{},status:"loading"}};
+let state={mode:"intl",origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,prevRet:"2026-07-05",live:{flights:{},hotels:{},status:"loading"}};
+const POOL=()=>state.mode==="dom"?DOM_DEST:DEST;
 
 const svg=d3.select("#map"),W=1000,H=720;
 let projection=d3.geoNaturalEarth1();
@@ -232,7 +271,7 @@ function compute(){
   const oF=state.origin==="DEL"?1:state.origin==="BOM"?1.06:1.12;
   const seed=(state.depart+state.ret).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
   const N=nights();
-  return DEST.map((d,i)=>{
+  return POOL().map((d,i)=>{
     let fa,fLive=false;const lf=state.live.flights[d.code];
     if(lf&&lf.length){fa=lf.slice().sort((a,b)=>a.price-b.price);fLive=true;}
     else{const wob=1+(((seed*(i+7))%9)-4)/100;fa=(d.flights||genFlights(d.base)).map(f=>({...f,price:Math.round(f.price*oF*wob*(state.trip==="oneway"?0.56:1)/10)*10})).sort((a,b)=>a.price-b.price);}
@@ -253,13 +292,31 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
   gMap.selectAll("path").data(c.features).join("path").attr("class","country").attr("d",path);
   // overlay India's official boundary (Survey-of-India aligned, via datameet) — Indian map version
   d3.json("https://raw.githubusercontent.com/datameet/maps/master/Country/india-land-simplified.geojson").then(ind=>{gMap.append("path").datum(ind).attr("class","india-off").attr("d",path);}).catch(()=>{});
-  const cc=document.getElementById("continents");
-  ["all",...CONTS].forEach(k=>{const el=document.createElement("div");el.className="chip"+(k==="all"?" on":"");el.textContent=k==="all"?"🌍 All":k;el.onclick=()=>{state.cont=k;[...cc.children].forEach(x=>x.classList.remove("on"));el.classList.add("on");render()};cc.appendChild(el)});
+  const sel=document.getElementById("origin");
+  Object.entries(ORIGINS).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=`${v.name} (${k})`;sel.appendChild(o);});
+  sel.value=state.origin;
+  buildChips();
   const all=compute();const gm=Math.ceil(Math.max(...all.map(d=>d.allIn))/1000)*1000;
   const b=document.getElementById("budget");b.max=gm;b.value=gm;state.budget=gm;
   svg.call(zoom);
   render();loadLive();
 });
+function buildChips(){
+  const cc=document.getElementById("continents");cc.innerHTML="";
+  const keys=state.mode==="dom"?REGIONS:CONTS;
+  document.getElementById("contLabel").textContent=state.mode==="dom"?"Region":"Continent";
+  ["all",...keys].forEach(k=>{const el=document.createElement("div");el.className="chip"+(state.cont===k?" on":(k==="all"&&state.cont==="all"?" on":""));el.textContent=k==="all"?(state.mode==="dom"?"🇮🇳 All India":"🌍 All"):k;el.onclick=()=>{state.cont=k;[...cc.children].forEach(x=>x.classList.remove("on"));el.classList.add("on");render()};cc.appendChild(el)});
+}
+function fitToData(){
+  const pts=compute().filter(passFilters).map(d=>projection(d.coord));
+  if(!pts.length)return;
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const pad=80,bw=Math.max(40,x1-x0),bh=Math.max(40,y1-y0);
+  const k=Math.max(1,Math.min(8,0.9*Math.min((W-pad)/bw,(H-pad)/bh)));
+  const cx=(x0+x1)/2,cy=(y0+y1)/2;
+  svg.call(zoom.transform,d3.zoomIdentity.translate(W/2-k*cx,H/2-k*cy).scale(k));
+}
 
 async function loadLive(){
   setStatus("loading");
@@ -360,10 +417,11 @@ function drawList(data){
         <div class="incnote">A row is struck‑through when you've turned it off under “Count toward budget”.</div>
         <div class="sech">✈ Top cheapest flights ${d.fLive?'<span style="color:#28d17c">· live</span>':''}</div>
         ${d.flights.slice(0,2).map(f=>`<div class="fl"><div class="air">${f.air}</div><div class="tm">${f.dep}${f.arr?" – "+f.arr:""}<small>${f.stops} · ${f.dur}</small></div><div class="fp">${fmt(f.price)}</div><a class="book" href="${f.link||"#"}" ${f.link?'target="_blank"':'onclick="return false"'}>Book</a></div>`).join("")}
-        <div class="sech" style="margin-top:14px">🛂 Visa for Indian passport</div>
+        ${d.visa.t==="dom"?`<div class="vnote" style="margin-top:14px;font-size:12px">🛂 Domestic trip — no visa or passport needed.</div>`:`
+        <div class="sech" style="margin-top:14px">🛂 Visa for Indian passport <span style="color:var(--muted);text-transform:none;letter-spacing:0;float:right">✓ verified ${d.visa.lv}</span></div>
         <div class="vgrid"><div class="vbox"><div class="k">Cost</div><div class="v">${d.visa.cost?fmt(d.visa.cost):"Free"}</div></div><div class="vbox"><div class="k">Processing</div><div class="v">${d.visa.time}</div></div><div class="vbox"><div class="k">Type</div><div class="v" style="color:${vb.color}">${vb.label}</div></div></div>
         <div class="vbox" style="margin-top:8px"><div class="k">Approval probability <span style="float:right;color:${pcol(d.visa.approval)}">${d.visa.approval}%</span></div><div class="pbar"><i style="width:${d.visa.approval}%;background:${pcol(d.visa.approval)}"></i></div></div>
-        <div class="vnote">${d.visa.note} <a href="#" onclick="return false">Official site ›</a></div>
+        <div class="vnote">${d.visa.note} <a href="#" onclick="return false">Official site ›</a></div>`}
       </div>`;
     card.querySelector(".chead").onclick=()=>{state.open.has(d.code)?state.open.delete(d.code):state.open.add(d.code);state.flash=null;if(!state.autoCollapsed){state.autoCollapsed=true;state.filtersOpen=false;applyCollapse();}render();};
     list.appendChild(card);
@@ -374,11 +432,24 @@ function fmtDate(s){const d=new Date(s);return d.toLocaleDateString("en-IN",{day
 function applyCollapse(){document.getElementById("controls").classList.toggle("collapsed",!state.filtersOpen);document.getElementById("collapse").textContent=state.filtersOpen?"Hide ▲":"Edit ▼";}
 
 // controls
-document.getElementById("origin").onchange=e=>{state.origin=e.target.value;render();loadLive()};
+function applyMode(){
+  document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x.dataset.m===state.mode));
+  const dom=state.mode==="dom";
+  document.getElementById("sub").textContent=dom?"Where in India can you fly — by budget?":"Where can you afford to go — worldwide?";
+  // hide visa controls in domestic mode
+  document.querySelector('#parts .chk:nth-child(2)').style.display=dom?"none":"";
+  document.querySelector('#filters .chip[data-f="visafree"]').style.display=dom?"none":"";
+  document.querySelectorAll('#sort button')[1].style.display=dom?"none":"";
+  state.cont="all";if(dom&&state.sort==="visa")state.sort="cheap";
+  document.querySelectorAll('#sort button').forEach(x=>x.classList.toggle("on",x.dataset.s===state.sort));
+  buildChips();
+}
+document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{if(state.mode===b.dataset.m)return;state.mode=b.dataset.m;state.open=new Set();state.flash=null;state.budget=9e9;applyMode();render();fitToData();loadLive();});
+document.getElementById("origin").onchange=e=>{state.origin=e.target.value;state.budget=9e9;render();loadLive()};
 document.getElementById("depart").onchange=e=>{state.depart=e.target.value;render();loadLive()};
 document.getElementById("return").onchange=e=>{state.ret=e.target.value;render();loadLive()};
 document.getElementById("budget").oninput=e=>{state.budget=+e.target.value;render()};
-document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;const r=document.getElementById("return");if(state.trip==="oneway"){if(state.ret)state.prevRet=state.ret;r.value="";r.disabled=true;state.ret="";}else{r.disabled=false;r.value=state.prevRet||"2026-07-05";state.ret=r.value;}render();loadLive();});
+document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;state.budget=9e9;const r=document.getElementById("return");if(state.trip==="oneway"){if(state.ret)state.prevRet=state.ret;r.value="";r.disabled=true;state.ret="";}else{r.disabled=false;r.value=state.prevRet||"2026-07-05";state.ret=r.value;}render();loadLive();});
 document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#sort button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.sort=b.dataset.s;render();});
 document.querySelectorAll("#filters .chip[data-f]").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render();});
 document.querySelectorAll("#parts input").forEach(c=>c.onchange=()=>{state.parts[c.dataset.p]=c.checked;c.closest(".chk").classList.toggle("off",!c.checked);render();});
