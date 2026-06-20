@@ -15,13 +15,19 @@
 const DESTINATIONS = ["KTM","CMB","BKK","TAS","KUL","DOH","DXB","HKT","HAN","SGN","MLE","SIN","DPS","IST","LHR","CDG","NBO","CAI","MRU","JNB","JFK","YYZ","GRU","SYD","ALA","AUH","MCT","CGK","HKG","ICN","PNH","FCO","AMS","GYD","TBS","ZNZ","SEZ","AKL","LAX","YVR","GOI","SXR","IXL","COK","MAA","BLR","HYD","BOM","UDR","JAI","VNS","CCU","GAU","IXZ"];
 const TTL = 21600; // 6h
 
-// Lazy KV client — only loads if a KV store is connected (envs present).
+// Lazy Redis client — works with Vercel KV *or* Upstash Redis env naming.
+// (Edge Config will NOT work here: it can't be written to per-request.)
 let _kv = null, _kvTried = false;
 async function kv() {
   if (_kvTried) return _kv;
   _kvTried = true;
-  if (!process.env.KV_REST_API_URL) return (_kv = null);
-  try { _kv = (await import("@vercel/kv")).kv; } catch { _kv = null; }
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return (_kv = null);
+  try {
+    const { Redis } = await import("@upstash/redis");
+    _kv = new Redis({ url, token });
+  } catch { _kv = null; }
   return _kv;
 }
 
