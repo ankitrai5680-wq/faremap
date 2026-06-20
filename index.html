@@ -8,10 +8,10 @@
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <style>
   :root{
-    --bg:#0b1020; --panel:#121a31; --panel2:#0f1730; --card:#152037; --ink:#e8ecf6;
-    --muted:#8a96b3; --line:#22304f; --accent:#5b8cff;
-    --cheap:#28d17c; --mid:#ffd25b; --exp:#ff5e6c;
-    --free:#28d17c; --voa:#2bc4c4; --evisa:#ffb13b; --embassy:#ff5e6c;
+    --bg:#0b1020;--panel:#121a31;--panel2:#0f1730;--card:#152037;--ink:#e8ecf6;
+    --muted:#8a96b3;--line:#22304f;--accent:#5b8cff;
+    --cheap:#28d17c;--mid:#ffd25b;--exp:#ff5e6c;
+    --free:#28d17c;--voa:#2bc4c4;--evisa:#ffb13b;--embassy:#ff5e6c;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
@@ -19,9 +19,10 @@
   aside{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
   .pad{padding:16px 20px}
   .scroll{overflow-y:auto;flex:1;min-height:0}
-  h1{font-size:20px;margin:0 0 2px;letter-spacing:-.3px}
-  h1 span{color:var(--accent)}
+  h1{font-size:20px;margin:0 0 2px;letter-spacing:-.3px}h1 span{color:var(--accent)}
   .sub{color:var(--muted);font-size:12px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--line);margin-top:8px}
+  .pill.live{color:#28d17c;border-color:#28d17c55}.pill.demo{color:#ffb13b;border-color:#ffb13b55}.pill.loading{color:var(--muted)}
   label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 6px}
   select,input[type=date]{width:100%;padding:9px 11px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:13px}
   .row{display:flex;gap:9px}.row>div{flex:1}
@@ -29,12 +30,20 @@
   .toggle button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600}
   .toggle button.on{background:var(--accent);color:#fff}
   .sticky{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
-  .bignum{font-size:25px;font-weight:800;letter-spacing:-.5px}
-  .bignum small{font-size:12px;color:var(--muted);font-weight:600}
+  .bignum{font-size:25px;font-weight:800;letter-spacing:-.5px}.bignum small{font-size:12px;color:var(--muted);font-weight:600}
   input[type=range]{width:100%;accent-color:var(--accent);margin:7px 0 2px}
   .summary{font-size:12px;color:var(--muted)}.summary b{color:var(--ink)}
+  .fhead{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+  .fhead span{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  .fhead button{background:none;border:0;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer}
+  .fsum{display:none;font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+  .sticky.collapsed .filtersBody{display:none}
+  .sticky.collapsed .fsum{display:block}
   .surprise{margin-top:10px;width:100%;border:0;background:linear-gradient(90deg,#5b8cff,#28d17c);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:10px;cursor:pointer}
-  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .parts{display:flex;gap:8px;margin-top:6px}
+  .chk{flex:1;display:flex;align-items:center;gap:6px;justify-content:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 6px;font-size:12px;cursor:pointer;user-select:none}
+  .chk input{accent-color:var(--accent);margin:0}.chk.off{opacity:.45}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
   .chip{font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;user-select:none}
   .chip.on{background:#1b2b54;color:#fff;border-color:var(--accent)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:9px 0;overflow:hidden}
@@ -45,13 +54,9 @@
   .cmeta .c1{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
   .cmeta .c2{font-size:11px;color:var(--muted);margin-top:2px}
   .vbadge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:20px}
-  .price{text-align:right;flex:none}
-  .price .all{font-size:15px;font-weight:800}
-  .price .brk{font-size:9.5px;color:var(--muted);margin-top:1px}
-  .chev{flex:none;color:var(--muted);transition:.2s;font-size:12px}
-  .card.open .chev{transform:rotate(90deg)}
-  .body{display:none;border-top:1px solid var(--line);padding:12px;background:var(--panel2)}
-  .card.open .body{display:block}
+  .price{text-align:right;flex:none}.price .all{font-size:15px;font-weight:800}.price .brk{font-size:9.5px;color:var(--muted);margin-top:1px}
+  .chev{flex:none;color:var(--muted);transition:.2s;font-size:12px}.card.open .chev{transform:rotate(90deg)}
+  .body{display:none;border-top:1px solid var(--line);padding:12px;background:var(--panel2)}.card.open .body{display:block}
   .sech{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:2px 0 8px}
   .fl{display:flex;align-items:center;gap:10px;padding:8px;border-radius:9px;background:var(--card);margin-bottom:7px}
   .fl .air{font-size:12px;font-weight:600;flex:none;width:84px}
@@ -62,30 +67,28 @@
   .vbox{background:var(--card);border-radius:9px;padding:8px 9px}
   .vbox .k{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
   .vbox .v{font-size:13px;font-weight:700;margin-top:3px}
-  .pbar{height:7px;background:#0b1020;border-radius:5px;margin-top:6px;overflow:hidden}
-  .pbar i{display:block;height:100%;border-radius:5px}
+  .pbar{height:7px;background:#0b1020;border-radius:5px;margin-top:6px;overflow:hidden}.pbar i{display:block;height:100%;border-radius:5px}
   .vnote{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.5}.vnote a{color:var(--accent)}
   main{position:relative;overflow:hidden}
-  svg{width:100%;height:100%;display:block}
+  svg{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  svg:active{cursor:grabbing}
   .country{fill:#16203c;stroke:#0b1020;stroke-width:.5}
   .arc{fill:none;stroke-linecap:round}
   .arc.flow{stroke-dasharray:2 10;animation:flow 1.2s linear infinite}
   @keyframes flow{to{stroke-dashoffset:-12}}
   .hub{fill:#fff;stroke:var(--accent);stroke-width:3}
-  .plabel{font-size:10px;font-weight:700;fill:#fff;paint-order:stroke;stroke:#0b1020;stroke-width:3px}
+  .plabel{font-size:11px;font-weight:700;paint-order:stroke;stroke:#0b1020;stroke-width:3px;pointer-events:none}
+  .zoomctl{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}
+  .zoomctl button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#0b1020cc;color:var(--ink);font-size:19px;font-weight:700;cursor:pointer}
+  .zoomctl button:hover{border-color:var(--accent)}
   .legend{position:absolute;left:16px;bottom:16px;background:#0b1020cc;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:11px}
   .legend .bar{height:8px;width:180px;border-radius:5px;background:linear-gradient(90deg,var(--cheap),var(--mid),var(--exp))}
   .legend .ends{display:flex;justify-content:space-between;color:var(--muted);margin-top:5px}
   .legend .vk{display:flex;gap:10px;margin-top:9px;flex-wrap:wrap}
-  .legend .vk span{display:flex;align-items:center;gap:5px;color:var(--muted)}
-  .legend .vk i{width:9px;height:9px;border-radius:50%}
+  .legend .vk span{display:flex;align-items:center;gap:5px;color:var(--muted)}.legend .vk i{width:9px;height:9px;border-radius:50%}
   .tag{position:absolute;top:14px;right:16px;background:#0b1020cc;border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--muted)}
   .tt{position:absolute;pointer-events:none;background:#0b1020ee;border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:12px;opacity:0;transition:.1s;transform:translate(-50%,-120%)}
   .disc{font-size:10.5px;color:var(--muted);line-height:1.5}
-  .parts{display:flex;gap:8px;margin-top:6px}
-  .chk{flex:1;display:flex;align-items:center;gap:6px;justify-content:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 6px;font-size:12px;cursor:pointer;user-select:none}
-  .chk input{accent-color:var(--accent);margin:0}
-  .chk.off{opacity:.45}
   body.cb{--cheap:#0072B2;--mid:#E6C229;--exp:#D55E00;--free:#0072B2;--voa:#56B4E9;--evisa:#E69F00;--embassy:#D55E00}
 </style>
 </head>
@@ -95,6 +98,7 @@
     <div class="pad">
       <h1>Fare<span>Map</span></h1>
       <p class="sub">Where can an Indian traveller afford to go — worldwide?</p>
+      <span class="pill loading" id="status">Fetching live prices…</span>
       <div class="row" style="margin-top:10px">
         <div><label>From</label><select id="origin"><option value="DEL">New Delhi (DEL)</option><option value="BOM">Mumbai (BOM)</option><option value="BLR">Bengaluru (BLR)</option></select></div>
         <div><label>Trip</label><div class="toggle" id="trip"><button data-t="round" class="on">Round</button><button data-t="oneway">One‑way</button></div></div>
@@ -105,46 +109,46 @@
       </div>
     </div>
 
-    <div class="sticky pad">
+    <div class="sticky pad" id="controls">
       <label style="margin-top:0">Budget — <span id="budgetLabel">flight + visa + stay</span>, per person</label>
       <div class="bignum">₹<span id="budgetVal">—</span> <small>or less</small></div>
       <input type="range" id="budget" min="0" max="300000" value="300000" step="1000">
       <div class="summary"><b id="cnt">—</b> of <span id="tot">—</span> fit · cheapest <b id="cheapest">—</b></div>
-      <button class="surprise" id="surprise">🎲 Surprise me — a place I can afford</button>
-      <label style="margin-top:12px">Count toward budget — pick what matters to you</label>
-      <div class="parts" id="parts">
-        <label class="chk"><input type="checkbox" data-p="flight" checked><span>✈ Flights</span></label>
-        <label class="chk"><input type="checkbox" data-p="visa" checked><span>🛂 Visa</span></label>
-        <label class="chk"><input type="checkbox" data-p="stay" checked><span>🏨 Stay</span></label>
+
+      <div class="fhead"><span>Filters &amp; options</span><button id="collapse">Hide ▲</button></div>
+      <div class="fsum" id="fsum"></div>
+      <div class="filtersBody" id="filtersBody">
+        <button class="surprise" id="surprise">🎲 Surprise me — a place I can afford</button>
+        <label style="margin-top:12px">Count toward budget — pick what matters</label>
+        <div class="parts" id="parts">
+          <label class="chk"><input type="checkbox" data-p="flight" checked><span>✈ Flights</span></label>
+          <label class="chk"><input type="checkbox" data-p="visa" checked><span>🛂 Visa</span></label>
+          <label class="chk"><input type="checkbox" data-p="stay" checked><span>🏨 Stay</span></label>
+        </div>
+        <label style="margin-top:12px">Continent</label>
+        <div class="chips" id="continents"></div>
+        <div class="chips" id="filters">
+          <div class="chip" data-f="visafree">🟢 Visa‑free only</div>
+          <div class="chip" data-f="nonstop">✈ Nonstop only</div>
+          <div class="chip" id="cbChip">👁 Colour‑blind</div>
+        </div>
+        <label style="margin-top:12px">Sort by</label>
+        <div class="toggle" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div>
       </div>
-      <label style="margin-top:12px">Continent</label>
-      <div class="chips" id="continents"></div>
-      <div class="chips" id="filters" style="margin-top:8px">
-        <div class="chip" data-f="visafree">🟢 Visa‑free only</div>
-        <div class="chip" data-f="nonstop">✈ Nonstop only</div>
-        <div class="chip" id="cbChip">👁 Colour‑blind</div>
-      </div>
-      <label style="margin-top:12px">Sort by</label>
-      <div class="toggle" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div>
     </div>
 
     <div class="scroll pad" id="list"></div>
-
-    <div class="pad" style="border-top:1px solid var(--line)">
-      <p class="disc"><b>Demo data.</b> Delhi flight fares for 28 Jun–5 Jul 2026 are real; others seeded. Stay = est. daily budget × nights. Visa cost / time / <b>approval % are indicative estimates for Indian passport holders</b> — rules change often; confirm on the official site before booking. Approval % is a heuristic, not a guarantee. Live version: free Travelpayouts API + maintained visa dataset.</p>
-    </div>
+    <div class="pad" style="border-top:1px solid var(--line)"><p class="disc" id="disc"></p></div>
   </aside>
 
   <main>
     <svg id="map" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid slice"></svg>
+    <div class="zoomctl"><button id="zin">+</button><button id="zout">−</button><button id="zreset" title="reset">⤢</button></div>
     <div class="tag" id="tag">round trip · 28 Jun → 5 Jul</div>
     <div class="legend">
       <div class="bar"></div>
       <div class="ends"><span id="lo">₹—</span><span>all‑in cost</span><span id="hi">₹—</span></div>
-      <div class="vk">
-        <span><i style="background:var(--free)"></i>Visa‑free</span><span><i style="background:var(--voa)"></i>On arrival</span>
-        <span><i style="background:var(--evisa)"></i>e‑Visa</span><span><i style="background:var(--embassy)"></i>Embassy</span>
-      </div>
+      <div class="vk"><span><i style="background:var(--free)"></i>Visa‑free</span><span><i style="background:var(--voa)"></i>On arrival</span><span><i style="background:var(--evisa)"></i>e‑Visa</span><span><i style="background:var(--embassy)"></i>Embassy</span></div>
     </div>
     <div class="tt" id="tt"></div>
   </main>
@@ -154,228 +158,223 @@
 const ORIGINS={DEL:{name:"New Delhi",coord:[77.10,28.56]},BOM:{name:"Mumbai",coord:[72.87,19.09]},BLR:{name:"Bengaluru",coord:[77.71,13.20]}};
 const V={free:{label:"Visa‑free",color:"var(--free)",ease:0},voa:{label:"On arrival",color:"var(--voa)",ease:1},evisa:{label:"e‑Visa",color:"var(--evisa)",ease:2},embassy:{label:"Embassy visa",color:"var(--embassy)",ease:3}};
 const CONTS=["Asia","Africa","Europe","Oceania","N. America","S. America"];
-// base=round-trip flight ₹ from DEL · dur=min nonstop minutes · daily=est ₹/day · visa=Indian-passport estimate
+function vz(t,cost,time,approval,note){return{t,cost,time,approval,note}}
+// base=fallback round-trip ₹ from DEL · dur=min nonstop minutes · daily=est ₹/day (fallback)
 const DEST=[
- {code:"KTM",city:"Kathmandu",country:"Nepal",cont:"Asia",coord:[85.36,27.70],base:21280,dur:100,daily:2000,
-  flights:[{air:"IndiGo",dep:"11:10",arr:"13:05",dur:"1h 40m",stops:"Nonstop",ns:1,price:21280},{air:"Air India",dep:"07:00",arr:"09:05",dur:"1h 50m",stops:"Nonstop",ns:1,price:23707}],
-  visa:{t:"free",cost:0,time:"Not required",approval:99,note:"Indians need no visa for Nepal."}},
- {code:"CMB",city:"Colombo",country:"Sri Lanka",cont:"Asia",coord:[79.88,7.18],base:28389,dur:215,daily:2500,
-  flights:[{air:"IndiGo",dep:"18:25",arr:"21:55",dur:"3h 30m",stops:"Nonstop",ns:1,price:28389},{air:"Air India",dep:"00:25",arr:"04:00",dur:"3h 35m",stops:"Nonstop",ns:1,price:29101}],
-  visa:{t:"evisa",cost:1700,time:"1–3 days",approval:98,note:"Sri Lanka ETA online (eta.gov.lk)."}},
- {code:"BKK",city:"Bangkok",country:"Thailand",cont:"Asia",coord:[100.75,13.69],base:29984,dur:265,daily:3000,
-  flights:[{air:"Air India",dep:"02:00",arr:"13:40",dur:"10h 10m",stops:"1 stop · PNQ",ns:0,price:29984},{air:"Air India",dep:"14:30",arr:"20:25",dur:"4h 25m",stops:"Nonstop",ns:1,price:35876}],
-  visa:{t:"free",cost:0,time:"Visa‑exempt 60d",approval:99,note:"Thailand visa‑free for Indians (60 days)."}},
- {code:"TAS",city:"Tashkent",country:"Uzbekistan",cont:"Asia",coord:[69.28,41.26],base:30500,dur:150,daily:2500,
-  flights:[{air:"Uzbekistan Air",dep:"08:30",arr:"10:55",dur:"2h 55m",stops:"Nonstop",ns:1,price:30500},{air:"Air India",dep:"13:20",arr:"16:00",dur:"3h 10m",stops:"Nonstop",ns:1,price:33200}],
-  visa:{t:"evisa",cost:1700,time:"2–3 days",approval:97,note:"Uzbekistan e‑visa (e-visa.gov.uz)."}},
- {code:"KUL",city:"Kuala Lumpur",country:"Malaysia",cont:"Asia",coord:[101.71,2.74],base:32000,dur:340,daily:3500,
-  flights:[{air:"AirAsia X",dep:"23:30",arr:"07:25",dur:"5h 25m",stops:"Nonstop",ns:1,price:32000},{air:"IndiGo",dep:"21:55",arr:"05:50",dur:"5h 25m",stops:"Nonstop",ns:1,price:34100}],
-  visa:{t:"free",cost:0,time:"Visa‑exempt 30d",approval:99,note:"Malaysia visa‑free for Indians till Dec 2026."}},
- {code:"DOH",city:"Doha",country:"Qatar",cont:"Asia",coord:[51.61,25.27],base:33000,dur:240,daily:7000,
-  flights:[{air:"IndiGo",dep:"03:50",arr:"06:30",dur:"4h 10m",stops:"Nonstop",ns:1,price:33000},{air:"Qatar Airways",dep:"08:40",arr:"11:10",dur:"4h",stops:"Nonstop",ns:1,price:36400}],
-  visa:{t:"voa",cost:0,time:"On arrival 30d",approval:97,note:"Qatar free 30‑day visa waiver on arrival."}},
- {code:"DXB",city:"Dubai",country:"UAE",cont:"Asia",coord:[55.36,25.25],base:26000,dur:220,daily:7000,
-  flights:[{air:"IndiGo",dep:"04:15",arr:"06:55",dur:"3h 40m",stops:"Nonstop",ns:1,price:26000},{air:"Air India Exp",dep:"21:30",arr:"00:10",dur:"3h 40m",stops:"Nonstop",ns:1,price:27850}],
-  visa:{t:"evisa",cost:6500,time:"3–4 days",approval:96,note:"UAE e‑visa via airline/agent."}},
- {code:"HKT",city:"Phuket",country:"Thailand",cont:"Asia",coord:[98.31,8.11],base:34000,dur:290,daily:3500,
-  flights:[{air:"IndiGo",dep:"23:10",arr:"05:05",dur:"4h 25m",stops:"Nonstop",ns:1,price:34000},{air:"Thai AirAsia",dep:"08:55",arr:"18:05",dur:"7h 40m",stops:"1 stop · DMK",ns:0,price:31200}],
-  visa:{t:"free",cost:0,time:"Visa‑exempt 60d",approval:99,note:"Thailand visa exemption."}},
- {code:"HAN",city:"Hanoi",country:"Vietnam",cont:"Asia",coord:[105.81,21.22],base:35418,dur:290,daily:2500,
-  flights:[{air:"Air India",dep:"01:20",arr:"07:20",dur:"4h 30m",stops:"Nonstop",ns:1,price:35418},{air:"IndiGo",dep:"05:00",arr:"10:40",dur:"4h 10m",stops:"Nonstop",ns:1,price:37946}],
-  visa:{t:"evisa",cost:2100,time:"3–5 days",approval:95,note:"Vietnam e‑visa, 90‑day."}},
- {code:"SGN",city:"Ho Chi Minh",country:"Vietnam",cont:"Asia",coord:[106.66,10.82],base:36700,dur:315,daily:2500,
-  flights:[{air:"Air India",dep:"13:10",arr:"19:55",dur:"5h 15m",stops:"Nonstop",ns:1,price:36700},{air:"Thai AirAsia",dep:"20:55",arr:"09:15",dur:"10h 50m",stops:"1 stop · DMK",ns:0,price:50206}],
-  visa:{t:"evisa",cost:2100,time:"3–5 days",approval:95,note:"Vietnam e‑visa."}},
- {code:"MLE",city:"Malé",country:"Maldives",cont:"Asia",coord:[73.53,4.19],base:37000,dur:270,daily:14000,
-  flights:[{air:"IndiGo",dep:"09:40",arr:"12:10",dur:"4h 10m",stops:"Nonstop",ns:1,price:37000},{air:"Air India",dep:"20:05",arr:"22:40",dur:"4h 15m",stops:"Nonstop",ns:1,price:39500}],
-  visa:{t:"voa",cost:0,time:"On arrival 30d",approval:99,note:"Free 30‑day VoA; need hotel + return ticket."}},
- {code:"SIN",city:"Singapore",country:"Singapore",cont:"Asia",coord:[103.99,1.36],base:38000,dur:340,daily:7000,
-  flights:[{air:"IndiGo",dep:"23:15",arr:"07:30",dur:"5h 45m",stops:"Nonstop",ns:1,price:38000},{air:"Singapore Air",dep:"20:35",arr:"05:00",dur:"5h 55m",stops:"Nonstop",ns:1,price:42500}],
-  visa:{t:"evisa",cost:2200,time:"3–5 days",approval:90,note:"Singapore e‑visa via authorised agent."}},
- {code:"DPS",city:"Bali",country:"Indonesia",cont:"Asia",coord:[115.17,-8.74],base:42000,dur:380,daily:3000,
-  flights:[{air:"IndiGo",dep:"22:40",arr:"09:35",dur:"8h 25m",stops:"1 stop · KUL",ns:0,price:42000},{air:"Vietjet",dep:"00:05",arr:"12:55",dur:"10h 20m",stops:"1 stop · HAN",ns:0,price:45300}],
-  visa:{t:"voa",cost:2900,time:"On arrival 30d",approval:98,note:"Indonesia VoA (IDR 500k) or e‑VoA."}},
- {code:"IST",city:"Istanbul",country:"Türkiye",cont:"Europe",coord:[28.75,41.27],base:48000,dur:420,daily:4500,
-  flights:[{air:"IndiGo",dep:"06:20",arr:"11:35",dur:"7h 45m",stops:"Nonstop",ns:1,price:48000},{air:"Turkish Air",dep:"08:05",arr:"13:20",dur:"7h 45m",stops:"Nonstop",ns:1,price:53800}],
-  visa:{t:"evisa",cost:4200,time:"1–3 days",approval:85,note:"Türkiye e‑visa needs valid Schengen/US/UK visa."}},
- {code:"LHR",city:"London",country:"UK",cont:"Europe",coord:[-0.45,51.47],base:62000,dur:565,daily:14000,
-  flights:[{air:"Air India",dep:"13:30",arr:"18:25",dur:"9h 25m",stops:"Nonstop",ns:1,price:62000},{air:"British A.",dep:"08:55",arr:"13:40",dur:"9h 15m",stops:"Nonstop",ns:1,price:68000}],
-  visa:{t:"embassy",cost:11000,time:"3 weeks",approval:80,note:"UK Standard Visitor visa; biometrics + funds proof."}},
- {code:"CDG",city:"Paris",country:"France",cont:"Europe",coord:[2.55,49.01],base:58000,dur:595,daily:12000,
-  flights:[{air:"Air India",dep:"02:30",arr:"07:55",dur:"9h 55m",stops:"Nonstop",ns:1,price:58000},{air:"Lufthansa",dep:"04:10",arr:"12:40",dur:"12h",stops:"1 stop · FRA",ns:0,price:55000}],
-  visa:{t:"embassy",cost:9000,time:"2–3 weeks",approval:82,note:"Schengen visa via VFS; appointment + itinerary."}},
- {code:"NBO",city:"Nairobi",country:"Kenya",cont:"Africa",coord:[36.93,-1.32],base:52000,dur:400,daily:5000,
-  flights:[{air:"Kenya Airways",dep:"04:20",arr:"08:30",dur:"6h 40m",stops:"Nonstop",ns:1,price:52000},{air:"Emirates",dep:"04:30",arr:"14:10",dur:"12h",stops:"1 stop · DXB",ns:0,price:58000}],
-  visa:{t:"evisa",cost:2300,time:"2–3 days",approval:95,note:"Kenya eTA for all visitors (etakenya.go.ke)."}},
- {code:"CAI",city:"Cairo",country:"Egypt",cont:"Africa",coord:[31.41,30.12],base:46000,dur:420,daily:3000,
-  flights:[{air:"EgyptAir",dep:"09:30",arr:"13:35",dur:"6h 35m",stops:"Nonstop",ns:1,price:46000},{air:"Air India",dep:"02:00",arr:"11:30",dur:"11h",stops:"1 stop · DXB",ns:0,price:49000}],
-  visa:{t:"evisa",cost:2200,time:"3 days",approval:93,note:"Egypt e‑visa (visa2egypt.gov.eg) or VoA."}},
- {code:"MRU",city:"Mauritius",country:"Mauritius",cont:"Africa",coord:[57.68,-20.43],base:48000,dur:450,daily:7000,
-  flights:[{air:"Air Mauritius",dep:"21:00",arr:"05:30",dur:"7h 30m",stops:"Nonstop",ns:1,price:48000},{air:"IndiGo",dep:"06:00",arr:"16:30",dur:"9h",stops:"1 stop · BOM",ns:0,price:51000}],
-  visa:{t:"free",cost:0,time:"On arrival 60d",approval:99,note:"Free visa on arrival for Indians."}},
- {code:"JNB",city:"Johannesburg",country:"South Africa",cont:"Africa",coord:[28.24,-26.13],base:70000,dur:600,daily:5000,
-  flights:[{air:"Emirates",dep:"04:30",arr:"15:50",dur:"13h 20m",stops:"1 stop · DXB",ns:0,price:70000},{air:"Ethiopian",dep:"03:45",arr:"14:30",dur:"12h",stops:"1 stop · ADD",ns:0,price:66000}],
-  visa:{t:"embassy",cost:2500,time:"1–2 weeks",approval:85,note:"South Africa visa via VFS; e‑visa rolling out."}},
- {code:"JFK",city:"New York",country:"USA",cont:"N. America",coord:[-73.78,40.64],base:95000,dur:955,daily:14000,
-  flights:[{air:"Air India",dep:"02:00",arr:"07:25",dur:"15h 55m",stops:"Nonstop",ns:1,price:95000},{air:"Emirates",dep:"04:30",arr:"09:30",dur:"19h",stops:"1 stop · DXB",ns:0,price:88000}],
-  visa:{t:"embassy",cost:16000,time:"long wait",approval:75,note:"US B1/B2; in‑person interview, wait varies widely."}},
- {code:"YYZ",city:"Toronto",country:"Canada",cont:"N. America",coord:[-79.63,43.68],base:90000,dur:880,daily:11000,
-  flights:[{air:"Air India",dep:"03:30",arr:"08:10",dur:"14h 40m",stops:"Nonstop",ns:1,price:90000},{air:"Qatar Airways",dep:"08:40",arr:"15:00",dur:"18h",stops:"1 stop · DOH",ns:0,price:85000}],
-  visa:{t:"embassy",cost:8000,time:"2–4 weeks",approval:70,note:"Canada visitor visa (IRCC); biometrics + funds."}},
- {code:"GRU",city:"São Paulo",country:"Brazil",cont:"S. America",coord:[-46.47,-23.43],base:120000,dur:1500,daily:7000,
-  flights:[{air:"Ethiopian",dep:"03:45",arr:"17:30",dur:"22h",stops:"1 stop · ADD",ns:0,price:120000},{air:"Emirates",dep:"04:30",arr:"19:00",dur:"24h",stops:"1 stop · DXB",ns:0,price:128000}],
-  visa:{t:"evisa",cost:3000,time:"5 days",approval:92,note:"Brazil e‑visa for Indians (vfsglobal)."}},
- {code:"SYD",city:"Sydney",country:"Australia",cont:"Oceania",coord:[151.18,-33.95],base:95000,dur:800,daily:12000,
-  flights:[{air:"Qantas",dep:"21:10",arr:"19:30",dur:"16h",stops:"1 stop · SIN",ns:0,price:95000},{air:"Singapore Air",dep:"20:35",arr:"21:00",dur:"18h",stops:"1 stop · SIN",ns:0,price:99000}],
-  visa:{t:"evisa",cost:1200,time:"5–10 days",approval:88,note:"Australia Visitor visa (subclass 600) online."}},
+ {code:"KTM",city:"Kathmandu",country:"Nepal",cont:"Asia",coord:[85.36,27.70],base:21280,dur:100,daily:2000,flights:[{air:"IndiGo",dep:"11:10",arr:"13:05",dur:"1h 40m",stops:"Nonstop",ns:1,price:21280},{air:"Air India",dep:"07:00",arr:"09:05",dur:"1h 50m",stops:"Nonstop",ns:1,price:23707}],visa:vz("free",0,"Not required",99,"Indians need no visa for Nepal.")},
+ {code:"CMB",city:"Colombo",country:"Sri Lanka",cont:"Asia",coord:[79.88,7.18],base:28389,dur:215,daily:2500,flights:[{air:"IndiGo",dep:"18:25",arr:"21:55",dur:"3h 30m",stops:"Nonstop",ns:1,price:28389},{air:"Air India",dep:"00:25",arr:"04:00",dur:"3h 35m",stops:"Nonstop",ns:1,price:29101}],visa:vz("evisa",1700,"1–3 days",98,"Sri Lanka ETA (eta.gov.lk).")},
+ {code:"BKK",city:"Bangkok",country:"Thailand",cont:"Asia",coord:[100.75,13.69],base:29984,dur:265,daily:3000,flights:[{air:"Air India",dep:"02:00",arr:"13:40",dur:"10h 10m",stops:"1 stop · PNQ",ns:0,price:29984},{air:"Air India",dep:"14:30",arr:"20:25",dur:"4h 25m",stops:"Nonstop",ns:1,price:35876}],visa:vz("free",0,"Visa‑exempt 60d",99,"Thailand visa‑free for Indians.")},
+ {code:"TAS",city:"Tashkent",country:"Uzbekistan",cont:"Asia",coord:[69.28,41.26],base:30500,dur:150,daily:2500,flights:[{air:"Uzbekistan Air",dep:"08:30",arr:"10:55",dur:"2h 55m",stops:"Nonstop",ns:1,price:30500},{air:"Air India",dep:"13:20",arr:"16:00",dur:"3h 10m",stops:"Nonstop",ns:1,price:33200}],visa:vz("evisa",1700,"2–3 days",97,"Uzbekistan e‑visa.")},
+ {code:"KUL",city:"Kuala Lumpur",country:"Malaysia",cont:"Asia",coord:[101.71,2.74],base:32000,dur:340,daily:3500,flights:[{air:"AirAsia X",dep:"23:30",arr:"07:25",dur:"5h 25m",stops:"Nonstop",ns:1,price:32000},{air:"IndiGo",dep:"21:55",arr:"05:50",dur:"5h 25m",stops:"Nonstop",ns:1,price:34100}],visa:vz("free",0,"Visa‑exempt 30d",99,"Malaysia visa‑free till Dec 2026.")},
+ {code:"DOH",city:"Doha",country:"Qatar",cont:"Asia",coord:[51.61,25.27],base:33000,dur:240,daily:7000,flights:[{air:"IndiGo",dep:"03:50",arr:"06:30",dur:"4h 10m",stops:"Nonstop",ns:1,price:33000},{air:"Qatar Airways",dep:"08:40",arr:"11:10",dur:"4h",stops:"Nonstop",ns:1,price:36400}],visa:vz("voa",0,"On arrival 30d",97,"Qatar free 30‑day waiver on arrival.")},
+ {code:"DXB",city:"Dubai",country:"UAE",cont:"Asia",coord:[55.36,25.25],base:26000,dur:220,daily:7000,flights:[{air:"IndiGo",dep:"04:15",arr:"06:55",dur:"3h 40m",stops:"Nonstop",ns:1,price:26000},{air:"AI Express",dep:"21:30",arr:"00:10",dur:"3h 40m",stops:"Nonstop",ns:1,price:27850}],visa:vz("evisa",6500,"3–4 days",96,"UAE e‑visa via airline/agent.")},
+ {code:"HKT",city:"Phuket",country:"Thailand",cont:"Asia",coord:[98.31,8.11],base:34000,dur:290,daily:3500,flights:[{air:"IndiGo",dep:"23:10",arr:"05:05",dur:"4h 25m",stops:"Nonstop",ns:1,price:34000},{air:"Thai AirAsia",dep:"08:55",arr:"18:05",dur:"7h 40m",stops:"1 stop · DMK",ns:0,price:31200}],visa:vz("free",0,"Visa‑exempt 60d",99,"Thailand visa exemption.")},
+ {code:"HAN",city:"Hanoi",country:"Vietnam",cont:"Asia",coord:[105.81,21.22],base:35418,dur:290,daily:2500,flights:[{air:"Air India",dep:"01:20",arr:"07:20",dur:"4h 30m",stops:"Nonstop",ns:1,price:35418},{air:"IndiGo",dep:"05:00",arr:"10:40",dur:"4h 10m",stops:"Nonstop",ns:1,price:37946}],visa:vz("evisa",2100,"3–5 days",95,"Vietnam e‑visa, 90‑day.")},
+ {code:"SGN",city:"Ho Chi Minh",country:"Vietnam",cont:"Asia",coord:[106.66,10.82],base:36700,dur:315,daily:2500,flights:[{air:"Air India",dep:"13:10",arr:"19:55",dur:"5h 15m",stops:"Nonstop",ns:1,price:36700},{air:"Thai AirAsia",dep:"20:55",arr:"09:15",dur:"10h 50m",stops:"1 stop · DMK",ns:0,price:50206}],visa:vz("evisa",2100,"3–5 days",95,"Vietnam e‑visa.")},
+ {code:"MLE",city:"Malé",country:"Maldives",cont:"Asia",coord:[73.53,4.19],base:37000,dur:270,daily:14000,flights:[{air:"IndiGo",dep:"09:40",arr:"12:10",dur:"4h 10m",stops:"Nonstop",ns:1,price:37000},{air:"Air India",dep:"20:05",arr:"22:40",dur:"4h 15m",stops:"Nonstop",ns:1,price:39500}],visa:vz("voa",0,"On arrival 30d",99,"Free 30‑day VoA; need hotel + return ticket.")},
+ {code:"SIN",city:"Singapore",country:"Singapore",cont:"Asia",coord:[103.99,1.36],base:38000,dur:340,daily:7000,flights:[{air:"IndiGo",dep:"23:15",arr:"07:30",dur:"5h 45m",stops:"Nonstop",ns:1,price:38000},{air:"Singapore Air",dep:"20:35",arr:"05:00",dur:"5h 55m",stops:"Nonstop",ns:1,price:42500}],visa:vz("evisa",2200,"3–5 days",90,"Singapore e‑visa via agent.")},
+ {code:"DPS",city:"Bali",country:"Indonesia",cont:"Asia",coord:[115.17,-8.74],base:42000,dur:380,daily:3000,flights:[{air:"IndiGo",dep:"22:40",arr:"09:35",dur:"8h 25m",stops:"1 stop · KUL",ns:0,price:42000},{air:"Vietjet",dep:"00:05",arr:"12:55",dur:"10h 20m",stops:"1 stop · HAN",ns:0,price:45300}],visa:vz("voa",2900,"On arrival 30d",98,"Indonesia VoA or e‑VoA.")},
+ {code:"IST",city:"Istanbul",country:"Türkiye",cont:"Europe",coord:[28.75,41.27],base:48000,dur:420,daily:4500,flights:[{air:"IndiGo",dep:"06:20",arr:"11:35",dur:"7h 45m",stops:"Nonstop",ns:1,price:48000},{air:"Turkish Air",dep:"08:05",arr:"13:20",dur:"7h 45m",stops:"Nonstop",ns:1,price:53800}],visa:vz("evisa",4200,"1–3 days",85,"Türkiye e‑visa needs valid Schengen/US/UK visa.")},
+ {code:"LHR",city:"London",country:"UK",cont:"Europe",coord:[-0.45,51.47],base:62000,dur:565,daily:14000,flights:[{air:"Air India",dep:"13:30",arr:"18:25",dur:"9h 25m",stops:"Nonstop",ns:1,price:62000},{air:"British A.",dep:"08:55",arr:"13:40",dur:"9h 15m",stops:"Nonstop",ns:1,price:68000}],visa:vz("embassy",11000,"3 weeks",80,"UK Standard Visitor visa; biometrics + funds.")},
+ {code:"CDG",city:"Paris",country:"France",cont:"Europe",coord:[2.55,49.01],base:58000,dur:595,daily:12000,flights:[{air:"Air India",dep:"02:30",arr:"07:55",dur:"9h 55m",stops:"Nonstop",ns:1,price:58000},{air:"Lufthansa",dep:"04:10",arr:"12:40",dur:"12h",stops:"1 stop · FRA",ns:0,price:55000}],visa:vz("embassy",9000,"2–3 weeks",82,"Schengen visa via VFS.")},
+ {code:"NBO",city:"Nairobi",country:"Kenya",cont:"Africa",coord:[36.93,-1.32],base:52000,dur:400,daily:5000,flights:[{air:"Kenya Airways",dep:"04:20",arr:"08:30",dur:"6h 40m",stops:"Nonstop",ns:1,price:52000},{air:"Emirates",dep:"04:30",arr:"14:10",dur:"12h",stops:"1 stop · DXB",ns:0,price:58000}],visa:vz("evisa",2300,"2–3 days",95,"Kenya eTA (etakenya.go.ke).")},
+ {code:"CAI",city:"Cairo",country:"Egypt",cont:"Africa",coord:[31.41,30.12],base:46000,dur:420,daily:3000,flights:[{air:"EgyptAir",dep:"09:30",arr:"13:35",dur:"6h 35m",stops:"Nonstop",ns:1,price:46000},{air:"Air India",dep:"02:00",arr:"11:30",dur:"11h",stops:"1 stop · DXB",ns:0,price:49000}],visa:vz("evisa",2200,"3 days",93,"Egypt e‑visa or VoA.")},
+ {code:"MRU",city:"Mauritius",country:"Mauritius",cont:"Africa",coord:[57.68,-20.43],base:48000,dur:450,daily:7000,flights:[{air:"Air Mauritius",dep:"21:00",arr:"05:30",dur:"7h 30m",stops:"Nonstop",ns:1,price:48000},{air:"IndiGo",dep:"06:00",arr:"16:30",dur:"9h",stops:"1 stop · BOM",ns:0,price:51000}],visa:vz("free",0,"On arrival 60d",99,"Free visa on arrival.")},
+ {code:"JNB",city:"Johannesburg",country:"South Africa",cont:"Africa",coord:[28.24,-26.13],base:70000,dur:600,daily:5000,flights:[{air:"Emirates",dep:"04:30",arr:"15:50",dur:"13h 20m",stops:"1 stop · DXB",ns:0,price:70000},{air:"Ethiopian",dep:"03:45",arr:"14:30",dur:"12h",stops:"1 stop · ADD",ns:0,price:66000}],visa:vz("embassy",2500,"1–2 weeks",85,"South Africa visa via VFS.")},
+ {code:"JFK",city:"New York",country:"USA",cont:"N. America",coord:[-73.78,40.64],base:95000,dur:955,daily:14000,flights:[{air:"Air India",dep:"02:00",arr:"07:25",dur:"15h 55m",stops:"Nonstop",ns:1,price:95000},{air:"Emirates",dep:"04:30",arr:"09:30",dur:"19h",stops:"1 stop · DXB",ns:0,price:88000}],visa:vz("embassy",16000,"long wait",75,"US B1/B2; in‑person interview.")},
+ {code:"YYZ",city:"Toronto",country:"Canada",cont:"N. America",coord:[-79.63,43.68],base:90000,dur:880,daily:11000,flights:[{air:"Air India",dep:"03:30",arr:"08:10",dur:"14h 40m",stops:"Nonstop",ns:1,price:90000},{air:"Qatar Airways",dep:"08:40",arr:"15:00",dur:"18h",stops:"1 stop · DOH",ns:0,price:85000}],visa:vz("embassy",8000,"2–4 weeks",70,"Canada visitor visa (IRCC).")},
+ {code:"GRU",city:"São Paulo",country:"Brazil",cont:"S. America",coord:[-46.47,-23.43],base:120000,dur:1500,daily:7000,flights:[{air:"Ethiopian",dep:"03:45",arr:"17:30",dur:"22h",stops:"1 stop · ADD",ns:0,price:120000},{air:"Emirates",dep:"04:30",arr:"19:00",dur:"24h",stops:"1 stop · DXB",ns:0,price:128000}],visa:vz("evisa",3000,"5 days",92,"Brazil e‑visa (vfsglobal).")},
+ {code:"SYD",city:"Sydney",country:"Australia",cont:"Oceania",coord:[151.18,-33.95],base:95000,dur:800,daily:12000,flights:[{air:"Qantas",dep:"21:10",arr:"19:30",dur:"16h",stops:"1 stop · SIN",ns:0,price:95000},{air:"Singapore Air",dep:"20:35",arr:"21:00",dur:"18h",stops:"1 stop · SIN",ns:0,price:99000}],visa:vz("evisa",1200,"5–10 days",88,"Australia Visitor visa (600).")},
+ // ---- extra pool (live flights fill these; reveal as you zoom) ----
+ {code:"ALA",city:"Almaty",country:"Kazakhstan",cont:"Asia",coord:[76.91,43.35],base:38000,dur:195,daily:4000,visa:vz("evisa",1700,"3–5 days",93,"Kazakhstan e‑visa / short visa‑free.")},
+ {code:"AUH",city:"Abu Dhabi",country:"UAE",cont:"Asia",coord:[54.65,24.43],base:27000,dur:220,daily:7000,visa:vz("evisa",6500,"3–4 days",96,"UAE e‑visa.")},
+ {code:"MCT",city:"Muscat",country:"Oman",cont:"Asia",coord:[58.28,23.59],base:30000,dur:200,daily:6000,visa:vz("evisa",4500,"3–4 days",95,"Oman e‑visa.")},
+ {code:"CGK",city:"Jakarta",country:"Indonesia",cont:"Asia",coord:[106.65,-6.13],base:44000,dur:410,daily:3000,visa:vz("voa",2900,"On arrival 30d",98,"Indonesia VoA / e‑VoA.")},
+ {code:"HKG",city:"Hong Kong",country:"Hong Kong",cont:"Asia",coord:[113.91,22.31],base:46000,dur:350,daily:8000,visa:vz("free",0,"Visa‑free 14d",99,"Hong Kong visa‑free 14d for Indians.")},
+ {code:"ICN",city:"Seoul",country:"South Korea",cont:"Asia",coord:[126.45,37.46],base:52000,dur:360,daily:6000,visa:vz("evisa",1300,"K‑ETA 3d",92,"Korea K‑ETA / visa.")},
+ {code:"PNH",city:"Phnom Penh",country:"Cambodia",cont:"Asia",coord:[104.84,11.55],base:38000,dur:330,daily:2500,visa:vz("voa",2500,"On arrival/e‑visa",97,"Cambodia e‑visa or VoA.")},
+ {code:"FCO",city:"Rome",country:"Italy",cont:"Europe",coord:[12.25,41.80],base:60000,dur:600,daily:11000,visa:vz("embassy",9000,"2–3 weeks",82,"Schengen via VFS.")},
+ {code:"AMS",city:"Amsterdam",country:"Netherlands",cont:"Europe",coord:[4.76,52.31],base:61000,dur:585,daily:12000,visa:vz("embassy",9000,"2–3 weeks",82,"Schengen via VFS.")},
+ {code:"GYD",city:"Baku",country:"Azerbaijan",cont:"Asia",coord:[50.05,40.47],base:36000,dur:360,daily:4000,visa:vz("evisa",2200,"3 days",94,"Azerbaijan ASAN e‑visa.")},
+ {code:"TBS",city:"Tbilisi",country:"Georgia",cont:"Asia",coord:[41.67,41.67],base:40000,dur:430,daily:3500,visa:vz("evisa",2000,"5–10 days",88,"Georgia e‑visa.")},
+ {code:"ZNZ",city:"Zanzibar",country:"Tanzania",cont:"Africa",coord:[39.22,-6.22],base:55000,dur:480,daily:5000,visa:vz("voa",4200,"On arrival/e‑visa",95,"Tanzania VoA / e‑visa.")},
+ {code:"SEZ",city:"Seychelles",country:"Seychelles",cont:"Africa",coord:[55.52,-4.67],base:60000,dur:480,daily:12000,visa:vz("free",0,"Visa‑free",99,"Free visitor permit on arrival.")},
+ {code:"AKL",city:"Auckland",country:"New Zealand",cont:"Oceania",coord:[174.79,-37.01],base:110000,dur:900,daily:12000,visa:vz("embassy",12000,"2–4 weeks",80,"NZ visitor visa + NZeTA.")},
+ {code:"LAX",city:"Los Angeles",country:"USA",cont:"N. America",coord:[-118.41,33.94],base:100000,dur:1000,daily:14000,visa:vz("embassy",16000,"long wait",75,"US B1/B2 interview.")},
+ {code:"YVR",city:"Vancouver",country:"Canada",cont:"N. America",coord:[-123.18,49.19],base:92000,dur:900,daily:11000,visa:vz("embassy",8000,"2–4 weeks",70,"Canada visitor visa.")},
 ];
 
-let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,init:false};
+let state={origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,live:{flights:{},hotels:{},status:"loading"}};
 
 const svg=d3.select("#map"),W=1000,H=720;
 let projection=d3.geoNaturalEarth1();
 const path=d3.geoPath(projection);
-const gMap=svg.append("g"),gArc=svg.append("g"),gPin=svg.append("g");
+const gRoot=svg.append("g"),gMap=gRoot.append("g"),gArc=gRoot.append("g"),gDots=gRoot.append("g"),gLab=svg.append("g");
 const tt=document.getElementById("tt");
 const ttShow=(x,y,h)=>{tt.style.opacity=1;tt.style.left=x+"px";tt.style.top=y+"px";tt.innerHTML=h};
 const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
-let color;
+let color,SW,LD=[],cur=d3.zoomIdentity;
+const inB=d=>d.allIn<=state.budget;
+
+const zoom=d3.zoom().scaleExtent([1,8]).on("zoom",ev=>{cur=ev.transform;gRoot.attr("transform",cur);layout();});
 
 function nights(){const a=new Date(state.depart),b=new Date(state.ret);const n=Math.round((b-a)/864e5);return state.trip==="oneway"?7:(n>0?n:1);}
+function genFlights(base){return[{air:"Lowest fare",dep:"—",arr:"",dur:"varies",stops:"Nonstop",ns:1,price:base},{air:"Alt route",dep:"—",arr:"",dur:"varies",stops:"1 stop",ns:0,price:Math.round(base*1.12/10)*10}];}
 function compute(){
   const oF=state.origin==="DEL"?1:state.origin==="BOM"?1.06:1.12;
   const seed=(state.depart+state.ret).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
   const N=nights();
   return DEST.map((d,i)=>{
-    const wob=1+(((seed*(i+7))%9)-4)/100;
-    const fa=d.flights.map(f=>({...f,price:Math.round(f.price*oF*wob*(state.trip==="oneway"?0.56:1)/10)*10})).sort((a,b)=>a.price-b.price);
-    const flight=fa[0].price, stay=N*d.daily;
+    let fa,fLive=false;const lf=state.live.flights[d.code];
+    if(lf&&lf.length){fa=lf.slice().sort((a,b)=>a.price-b.price);fLive=true;}
+    else{const wob=1+(((seed*(i+7))%9)-4)/100;fa=(d.flights||genFlights(d.base)).map(f=>({...f,price:Math.round(f.price*oF*wob*(state.trip==="oneway"?0.56:1)/10)*10})).sort((a,b)=>a.price-b.price);}
+    const flight=fa[0].price;
+    const hot=state.live.hotels[d.code];const stayLive=hot!=null;const stay=stayLive?hot:N*d.daily;
     const allIn=(state.parts.flight?flight:0)+(state.parts.visa?d.visa.cost:0)+(state.parts.stay?stay:0);
-    return {...d,flights:fa,flight,stay,allIn,hasNonstop:d.flights.some(f=>f.ns)};
+    return {...d,flights:fa,flight,fLive,stay,stayLive,allIn,hasNonstop:fa.some(f=>f.ns)};
   });
 }
-function passFilters(d){
-  if(state.visafree&&d.visa.t!=="free")return false;
-  if(state.nonstop&&!d.hasNonstop)return false;
-  if(state.cont!=="all"&&d.cont!==state.cont)return false;
-  return true;
-}
-function sortFn(a,b){
-  if(state.sort==="visa")return(V[a.visa.t].ease-V[b.visa.t].ease)||(b.visa.approval-a.visa.approval)||(a.allIn-b.allIn);
-  if(state.sort==="fast")return a.dur-b.dur;
-  return a.allIn-b.allIn;
-}
+function passFilters(d){if(state.visafree&&d.visa.t!=="free")return false;if(state.nonstop&&!d.hasNonstop)return false;if(state.cont!=="all"&&d.cont!==state.cont)return false;return true;}
+function sortFn(a,b){if(state.sort==="visa")return(V[a.visa.t].ease-V[b.visa.t].ease)||(b.visa.approval-a.visa.approval)||(a.allIn-b.allIn);if(state.sort==="fast")return a.dur-b.dur;return a.allIn-b.allIn;}
 function pcol(p){return p>=95?"var(--free)":p>=85?"var(--evisa)":"var(--exp)"}
+function arcPath(a,b){const p1=projection(a),p2=projection(b),dx=p2[0]-p1[0],dy=p2[1]-p1[1],dr=Math.hypot(dx,dy)||1;const mx=(p1[0]+p2[0])/2,my=(p1[1]+p2[1])/2,nx=-dy/dr,ny=dx/dr,bow=dr*0.18;return `M${p1[0]},${p1[1]} Q${mx+nx*bow},${my+ny*bow} ${p2[0]},${p2[1]}`;}
 
 d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world=>{
   const c=topojson.feature(world,world.objects.countries);
   projection.fitExtent([[14,40],[986,700]],c);
   gMap.selectAll("path").data(c.features).join("path").attr("class","country").attr("d",path);
-  // continent chips
   const cc=document.getElementById("continents");
   ["all",...CONTS].forEach(k=>{const el=document.createElement("div");el.className="chip"+(k==="all"?" on":"");el.textContent=k==="all"?"🌍 All":k;el.onclick=()=>{state.cont=k;[...cc.children].forEach(x=>x.classList.remove("on"));el.classList.add("on");render()};cc.appendChild(el)});
   const all=compute();const gm=Math.ceil(Math.max(...all.map(d=>d.allIn))/1000)*1000;
-  const b=document.getElementById("budget");b.max=gm;b.value=gm;state.budget=gm;state.init=true;
-  render();
+  const b=document.getElementById("budget");b.max=gm;b.value=gm;state.budget=gm;
+  svg.call(zoom);
+  render();loadLive();
 });
 
-function arcPath(a,b){
-  const p1=projection(a),p2=projection(b),dx=p2[0]-p1[0],dy=p2[1]-p1[1],dr=Math.hypot(dx,dy);
-  const mx=(p1[0]+p2[0])/2,my=(p1[1]+p2[1])/2,nx=-dy/dr,ny=dx/dr,bow=dr*0.18;
-  return `M${p1[0]},${p1[1]} Q${mx+nx*bow},${my+ny*bow} ${p2[0]},${p2[1]}`;
+async function loadLive(){
+  setStatus("loading");
+  const qs=`origin=${state.origin}&depart=${state.depart}&ret=${state.ret}&trip=${state.trip}`;
+  try{
+    const [pf,hf]=await Promise.allSettled([fetch("/api/prices?"+qs).then(r=>r.json()),fetch("/api/hotels?"+qs).then(r=>r.json())]);
+    state.live.flights={};state.live.hotels={};let fl=false,ho=false;
+    if(pf.status==="fulfilled"&&pf.value&&!pf.value.fallback&&pf.value.data)pf.value.data.forEach(x=>{if(x.flights&&x.flights.length){state.live.flights[x.code]=x.flights;fl=true;}});
+    if(hf.status==="fulfilled"&&hf.value&&!hf.value.fallback&&hf.value.data)hf.value.data.forEach(x=>{if(x.total!=null){state.live.hotels[x.code]=x.total;ho=true;}});
+    state.live.status=fl?(ho?"live-both":"live-flights"):"demo";
+  }catch(e){state.live.status="demo";}
+  setStatus(state.live.status);render();
+}
+function setStatus(s){
+  const el=document.getElementById("status"),dc=document.getElementById("disc");
+  const map={loading:["loading","◌ Fetching live prices…"],"live-both":["live","● Live flight + hotel prices"],"live-flights":["live","● Live flight prices"],demo:["demo","● Demo / fallback prices"]};
+  const[cls,txt]=map[s]||map.loading;el.className="pill "+cls;el.textContent=txt;
+  const notes={loading:"Fetching live data from Travelpayouts…","live-both":"<b>Live flight + hotel prices</b> from Travelpayouts. Visa cost/time/approval are <b>indicative estimates</b> for Indian passports — verify on the official site.","live-flights":"<b>Live flight prices</b> from Travelpayouts. Hotel = est. (enable the Hotellook program to make hotels live). Visa figures are indicative — verify officially.",demo:"<b>Demo / fallback data</b> (live API not reachable from here — works once deployed on Vercel with your token). Visa figures are indicative."};
+  dc.innerHTML=notes[s]||notes.loading;
 }
 
 function render(){
   const o=ORIGINS[state.origin];
-  const full=compute();
-  let data=full.filter(passFilters);
-  // keep budget slider range in sync with what's actually counted
+  const full=compute();let data=full.filter(passFilters);
   const bEl=document.getElementById("budget");const gmax=Math.ceil((Math.max(...full.map(d=>d.allIn))||1000)/1000)*1000;
-  bEl.max=gmax; if(state.budget>gmax){state.budget=gmax;bEl.value=gmax;}
-  if(!data.length){document.getElementById("list").innerHTML='<p style="color:var(--muted);font-size:13px">No destinations match these filters.</p>';gArc.selectAll("*").remove();gPin.selectAll("g.pin").remove();return;}
+  bEl.max=gmax;if(state.budget>gmax){state.budget=gmax;bEl.value=gmax;}
+  if(!data.length){document.getElementById("list").innerHTML='<p style="color:var(--muted);font-size:13px">No destinations match these filters.</p>';gArc.selectAll("*").remove();gDots.selectAll("circle.pin").remove();gLab.selectAll("*").remove();return;}
   const lo=Math.min(...data.map(d=>d.allIn)),hi=Math.max(...data.map(d=>d.allIn));
   const PAL=state.cb?["#0072B2","#E6C229","#D55E00"]:["#28d17c","#ffd25b","#ff5e6c"];
   color=d3.scaleLinear().domain([lo,(lo+hi)/2,hi]).range(PAL);
-  const inB=d=>d.allIn<=state.budget;const fits=data.filter(inB);
-  data.sort(sortFn);
+  SW=d3.scaleLinear().domain([lo,hi]).range([4,1.3]);
+  const fits=data.filter(inB);data.sort(sortFn);LD=data;
 
-  const lbl=[];if(state.parts.flight)lbl.push("flight");if(state.parts.visa)lbl.push("visa");if(state.parts.stay)lbl.push(nights()+"‑night stay");
-  document.getElementById("budgetLabel").textContent=lbl.length?lbl.join(" + "):"nothing selected";
   document.getElementById("budgetVal").textContent=(+state.budget).toLocaleString("en-IN");
-  document.getElementById("cnt").textContent=fits.length;
-  document.getElementById("tot").textContent=data.length;
+  document.getElementById("cnt").textContent=fits.length;document.getElementById("tot").textContent=data.length;
   document.getElementById("cheapest").textContent=fits.length?(fits.reduce((m,d)=>d.allIn<m.allIn?d:m).city+" "+fmt(Math.min(...fits.map(d=>d.allIn)))):"— raise budget";
   document.getElementById("lo").textContent=fmt(lo);document.getElementById("hi").textContent=fmt(hi);
+  const lbl=[];if(state.parts.flight)lbl.push("flight");if(state.parts.visa)lbl.push("visa");if(state.parts.stay)lbl.push(nights()+"‑night stay");
+  document.getElementById("budgetLabel").textContent=lbl.length?lbl.join(" + "):"nothing selected";
   document.getElementById("tag").textContent=(state.trip==="round"?"round trip":"one way")+" · "+nights()+" nights · "+fmtDate(state.depart);
+  document.getElementById("fsum").innerHTML=`${state.cont==="all"?"🌍 All":state.cont} · ${["flight","visa","stay"].filter(p=>state.parts[p]).map(p=>({flight:"✈",visa:"🛂",stay:"🏨"}[p])).join("")||"—"} · ${ {cheap:"Cheapest",visa:"Easiest visa",fast:"Fastest"}[state.sort]}${state.visafree?" · visa‑free":""}${state.nonstop?" · nonstop":""}`;
 
-  const sw=d3.scaleLinear().domain([lo,hi]).range([4,1.3]);
   gArc.selectAll("path").data(data,d=>d.code).join(
     e=>e.append("path").attr("class","arc flow").attr("d",d=>arcPath(o.coord,d.coord)),
-    u=>u.attr("d",d=>arcPath(o.coord,d.coord)),
-    x=>x.remove()
-  ).attr("stroke",d=>color(d.allIn)).attr("stroke-width",d=>sw(d.allIn)).attr("opacity",d=>inB(d)?.9:.1);
+    u=>u.attr("d",d=>arcPath(o.coord,d.coord)),x=>x.remove()
+  ).attr("stroke",d=>color(d.allIn)).attr("opacity",d=>inB(d)?.9:.1);
 
-  const pins=gPin.selectAll("g.pin").data(data,d=>d.code);
-  pins.exit().remove();
-  const pe=pins.enter().append("g").attr("class","pin");
-  pe.append("circle").attr("r",4);pe.append("text").attr("class","plabel").attr("dy",-8).attr("text-anchor","middle");
-  const pall=pe.merge(pins);
-  pall.attr("transform",d=>`translate(${projection(d.coord)})`).attr("opacity",d=>inB(d)?1:.22)
-      .on("mousemove",(e,d)=>ttShow(e.clientX-400,e.clientY,`<b>${d.city}</b> ${d.code}<br>${fmt(d.allIn)} all‑in<br><span style="color:#8a96b3">${V[d.visa.t].label} · flight ${fmt(d.flight)}</span>`))
-      .on("mouseleave",()=>tt.style.opacity=0);
-  pall.select("circle").attr("fill",d=>color(d.allIn));
-  pall.select("text").attr("fill",d=>color(d.allIn)).text(d=>fmt(d.allIn));
-  gPin.selectAll("circle.hub").data([o]).join("circle").attr("class","hub").attr("r",6).attr("cx",projection(o.coord)[0]).attr("cy",projection(o.coord)[1]);
+  const dots=gDots.selectAll("circle.pin").data(data,d=>d.code);
+  dots.exit().remove();
+  dots.enter().append("circle").attr("class","pin")
+    .on("mousemove",(e,d)=>ttShow(e.clientX-400,e.clientY,`<b>${d.city}</b> ${d.code}${d.fLive?' <span style="color:#28d17c">●live</span>':''}<br>${fmt(d.allIn)} all‑in<br><span style="color:#8a96b3">${V[d.visa.t].label} · flight ${fmt(d.flight)}</span>`))
+    .on("mouseleave",()=>tt.style.opacity=0)
+    .merge(dots).attr("cx",d=>projection(d.coord)[0]).attr("cy",d=>projection(d.coord)[1]).attr("fill",d=>color(d.allIn));
+  gDots.selectAll("circle.hub").data([o]).join("circle").attr("class","hub").attr("cx",projection(o.coord)[0]).attr("cy",projection(o.coord)[1]);
 
+  gLab.selectAll("text").data(data,d=>d.code).join(
+    e=>e.append("text").attr("class","plabel").attr("text-anchor","middle"),u=>u,x=>x.remove()
+  ).attr("fill",d=>color(d.allIn)).text(d=>fmt(d.allIn));
+
+  layout();
+  drawList(data);
+}
+
+function layout(){
+  const k=cur.k;
+  gArc.selectAll("path").attr("stroke-width",d=>SW(d.allIn)/k);
+  gDots.selectAll("circle.pin").attr("r",4/k).attr("opacity",d=>inB(d)?1:.22);
+  gDots.selectAll("circle.hub").attr("r",6/k);
+  // greedy label de-overlap in screen space → denser as you zoom in, never crowded
+  const placed=[];const MIN=58;
+  const order=LD.slice().sort((a,b)=>(inB(b)-inB(a))||(a.allIn-b.allIn));
+  const show=new Set();
+  order.forEach(d=>{const s=cur.apply(projection(d.coord));if(s[0]<-30||s[0]>W+30||s[1]<-30||s[1]>H+30)return;if(placed.every(p=>Math.hypot(p[0]-s[0],p[1]-s[1])>MIN)){placed.push(s);show.add(d.code);}});
+  gLab.selectAll("text").attr("x",d=>cur.apply(projection(d.coord))[0]).attr("y",d=>cur.apply(projection(d.coord))[1]-9)
+    .attr("display",d=>show.has(d.code)?null:"none").attr("opacity",d=>inB(d)?1:.5);
+}
+
+function drawList(data){
   const list=document.getElementById("list");list.innerHTML="";
   data.forEach(d=>{
-    const vb=V[d.visa.t];
-    const card=document.createElement("div");
+    const vb=V[d.visa.t];const card=document.createElement("div");
     card.className="card"+(state.open.has(d.code)?" open":"")+(inB(d)?"":" dim")+(state.flash===d.code?" flash":"");
     card.innerHTML=`
       <div class="chead">
         <span class="dot" style="background:${color(d.allIn)}"></span>
-        <div class="cmeta">
-          <div class="c1">${d.city} <span class="vbadge" style="background:${vb.color}22;color:${vb.color}">${vb.label}</span></div>
-          <div class="c2">${d.country} · ${d.cont} · ${d.code}</div>
-        </div>
-        <div class="price"><div class="all">${fmt(d.allIn)}</div><div class="brk">${[state.parts.flight?"✈"+fmt(d.flight):"",state.parts.visa?"🛂"+(d.visa.cost?fmt(d.visa.cost):"₹0"):"",state.parts.stay?"🏨"+fmt(d.stay):""].filter(Boolean).join(" ·")||"—"}</div></div>
-        <span class="chev">▶</span>
-      </div>
+        <div class="cmeta"><div class="c1">${d.city} <span class="vbadge" style="background:${vb.color}22;color:${vb.color}">${vb.label}</span></div>
+        <div class="c2">${d.country} · ${d.cont} · ${d.code}${d.fLive?' · <span style="color:#28d17c">live</span>':''}</div></div>
+        <div class="price"><div class="all">${fmt(d.allIn)}</div><div class="brk">${[state.parts.flight?"✈"+fmt(d.flight):"",state.parts.visa?"🛂"+(d.visa.cost?fmt(d.visa.cost):"₹0"):"",state.parts.stay?"🏨"+fmt(d.stay)+(d.stayLive?"":"*"):""].filter(Boolean).join(" ·")||"—"}</div></div>
+        <span class="chev">▶</span></div>
       <div class="body">
-        <div class="sech">✈ Top 2 cheapest flights</div>
-        ${d.flights.slice(0,2).map(f=>`<div class="fl"><div class="air">${f.air}</div><div class="tm">${f.dep} – ${f.arr}<small>${f.stops} · ${f.dur}</small></div><div class="fp">${fmt(f.price)}</div><a class="book" href="#" onclick="return false">Book</a></div>`).join("")}
+        <div class="sech">✈ Top cheapest flights ${d.fLive?'<span style="color:#28d17c">· live</span>':''}</div>
+        ${d.flights.slice(0,2).map(f=>`<div class="fl"><div class="air">${f.air}</div><div class="tm">${f.dep}${f.arr?" – "+f.arr:""}<small>${f.stops} · ${f.dur}</small></div><div class="fp">${fmt(f.price)}</div><a class="book" href="${f.link||"#"}" ${f.link?'target="_blank"':'onclick="return false"'}>Book</a></div>`).join("")}
         <div class="sech" style="margin-top:14px">🛂 Visa for Indian passport</div>
-        <div class="vgrid">
-          <div class="vbox"><div class="k">Cost</div><div class="v">${d.visa.cost?fmt(d.visa.cost):"Free"}</div></div>
-          <div class="vbox"><div class="k">Processing</div><div class="v">${d.visa.time}</div></div>
-          <div class="vbox"><div class="k">Type</div><div class="v" style="color:${vb.color}">${vb.label}</div></div>
-        </div>
+        <div class="vgrid"><div class="vbox"><div class="k">Cost</div><div class="v">${d.visa.cost?fmt(d.visa.cost):"Free"}</div></div><div class="vbox"><div class="k">Processing</div><div class="v">${d.visa.time}</div></div><div class="vbox"><div class="k">Type</div><div class="v" style="color:${vb.color}">${vb.label}</div></div></div>
         <div class="vbox" style="margin-top:8px"><div class="k">Approval probability <span style="float:right;color:${pcol(d.visa.approval)}">${d.visa.approval}%</span></div><div class="pbar"><i style="width:${d.visa.approval}%;background:${pcol(d.visa.approval)}"></i></div></div>
         <div class="vnote">${d.visa.note} <a href="#" onclick="return false">Official site ›</a></div>
       </div>`;
-    card.querySelector(".chead").onclick=()=>{state.open.has(d.code)?state.open.delete(d.code):state.open.add(d.code);state.flash=null;render()};
+    card.querySelector(".chead").onclick=()=>{state.open.has(d.code)?state.open.delete(d.code):state.open.add(d.code);state.flash=null;if(!state.autoCollapsed){state.autoCollapsed=true;state.filtersOpen=false;applyCollapse();}render();};
     list.appendChild(card);
     if(state.flash===d.code)setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"center"}),50);
   });
 }
 function fmtDate(s){const d=new Date(s);return d.toLocaleDateString("en-IN",{day:"numeric",month:"short"})}
+function applyCollapse(){document.getElementById("controls").classList.toggle("collapsed",!state.filtersOpen);document.getElementById("collapse").textContent=state.filtersOpen?"Hide ▲":"Edit ▼";}
 
-document.getElementById("origin").onchange=e=>{state.origin=e.target.value;render()};
-document.getElementById("depart").onchange=e=>{state.depart=e.target.value;render()};
-document.getElementById("return").onchange=e=>{state.ret=e.target.value;render()};
+// controls
+document.getElementById("origin").onchange=e=>{state.origin=e.target.value;render();loadLive()};
+document.getElementById("depart").onchange=e=>{state.depart=e.target.value;render();loadLive()};
+document.getElementById("return").onchange=e=>{state.ret=e.target.value;render();loadLive()};
 document.getElementById("budget").oninput=e=>{state.budget=+e.target.value;render()};
-document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;document.getElementById("return").disabled=state.trip==="oneway";render()});
-document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#sort button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.sort=b.dataset.s;render()});
-document.querySelectorAll("#filters .chip[data-f]").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render()});
-document.querySelectorAll("#parts input").forEach(c=>c.onchange=()=>{state.parts[c.dataset.p]=c.checked;c.closest(".chk").classList.toggle("off",!c.checked);render()});
-document.getElementById("cbChip").onclick=function(){state.cb=!state.cb;this.classList.toggle("on",state.cb);document.body.classList.toggle("cb",state.cb);render()};
-document.getElementById("surprise").onclick=()=>{
-  const fits=compute().filter(passFilters).filter(d=>d.allIn<=state.budget);
-  if(!fits.length){alert("Nothing fits — raise the budget or clear filters.");return;}
-  const pick=fits[Math.floor((Date.parse(state.depart)+fits.length*7)%fits.length)];
-  state.open=new Set([pick.code]);state.flash=pick.code;render();
-};
+document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;document.getElementById("return").disabled=state.trip==="oneway";render();loadLive();});
+document.querySelectorAll("#sort button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#sort button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.sort=b.dataset.s;render();});
+document.querySelectorAll("#filters .chip[data-f]").forEach(c=>c.onclick=()=>{c.classList.toggle("on");state[c.dataset.f]=c.classList.contains("on");render();});
+document.querySelectorAll("#parts input").forEach(c=>c.onchange=()=>{state.parts[c.dataset.p]=c.checked;c.closest(".chk").classList.toggle("off",!c.checked);render();});
+document.getElementById("cbChip").onclick=function(){state.cb=!state.cb;this.classList.toggle("on",state.cb);document.body.classList.toggle("cb",state.cb);render();};
+document.getElementById("collapse").onclick=()=>{state.filtersOpen=!state.filtersOpen;applyCollapse();};
+document.getElementById("surprise").onclick=()=>{const fits=compute().filter(passFilters).filter(d=>d.allIn<=state.budget);if(!fits.length){alert("Nothing fits — raise budget or clear filters.");return;}const pick=fits[Math.floor((Date.parse(state.depart)+fits.length*7)%fits.length)];state.open=new Set([pick.code]);state.flash=pick.code;render();};
+function zoomBy(factor){
+  const t=d3.zoomTransform(svg.node()),k=Math.max(1,Math.min(8,t.k*factor)),cx=W/2,cy=H/2;
+  const nx=cx-(cx-t.x)*(k/t.k),ny=cy-(cy-t.y)*(k/t.k);
+  svg.call(zoom.transform,d3.zoomIdentity.translate(nx,ny).scale(k));
+}
+document.getElementById("zin").onclick=()=>zoomBy(1.6);
+document.getElementById("zout").onclick=()=>zoomBy(0.625);
+document.getElementById("zreset").onclick=()=>svg.call(zoom.transform,d3.zoomIdentity);
 </script>
 </body>
 </html>

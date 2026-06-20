@@ -13,11 +13,21 @@ Type a city, dates and a budget → see **where in the world you can actually af
 - 🎲 **Surprise me** — picks a place you can afford.
 - 🔎 Filters: continent, visa-free only, nonstop only · Sort: Cheapest / Easiest visa / Fastest.
 
-## Run locally
+## Run locally (demo data only)
 ```bash
 cd flight-price-map
 python3 -m http.server 8000   # → http://localhost:8000
 ```
+
+## Run locally WITH live prices
+A tiny zero-dependency Node server proxies the API (so the token stays server-side):
+```bash
+cd flight-price-map
+TP_TOKEN=your_travelpayouts_token node dev-server.mjs 8753   # → http://localhost:8753
+```
+Flights go live immediately. **Hotels** need the **Hotellook / Hotels program activated** on your
+Travelpayouts account (separate from flights) — until then the app falls back to a per-night
+estimate (shown with a `*`). The status pill in the header reads "Live" vs "Demo" automatically.
 
 ## Go live — 100% free stack
 | Layer | Tool | Cost |
