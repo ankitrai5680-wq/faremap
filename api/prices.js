@@ -15,15 +15,11 @@
 const DESTINATIONS = ["KTM","CMB","BKK","TAS","KUL","DOH","DXB","HKT","HAN","SGN","MLE","SIN","DPS","IST","LHR","CDG","NBO","CAI","MRU","JNB","JFK","YYZ","GRU","SYD","ALA","AUH","MCT","CGK","HKG","ICN","PNH","FCO","AMS","GYD","TBS","ZNZ","SEZ","AKL","LAX","YVR","GOI","SXR","IXL","COK","MAA","BLR","HYD","BOM","UDR","JAI","VNS","CCU","GAU","IXZ"];
 const TTL = 21600; // 6h
 
-// Lazy cache client — supports either:
-//   (a) Upstash REST: KV_REST_API_URL / UPSTASH_REDIS_REST_URL + token  ← preferred
-//   (b) Redis TCP:    REDIS_URL  (e.g. Vercel Marketplace Redis add-on)
-// Same .get/.set interface either way. (Edge Config WON'T work — can't write per-request.)
-let _kv = null, _kvTried = false;
+// Lazy cache client — supports REST or TCP Redis. ?debug=1 exposes which path was tried.
+let _kv = null, _kvTried = false, _kvDiag = "untried";
 async function kv() {
   if (_kvTried) return _kv;
   _kvTried = true;
-  // (a) REST
   const restUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const restTok = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (restUrl && restTok) {
@@ -31,25 +27,35 @@ async function kv() {
       const { Redis } = await import("@upstash/redis");
       const c = new Redis({ url: restUrl, token: restTok });
       _kv = { get: k => c.get(k), set: (k, v, opt) => c.set(k, v, opt) };
-      return _kv;
-    } catch {}
+      _kvDiag = "rest:ok"; return _kv;
+    } catch (e) { _kvDiag = "rest:err:" + (e.message || e); }
   }
-  // (b) TCP
   const tcpUrl = process.env.REDIS_URL || process.env.KV_URL;
   if (tcpUrl) {
     try {
-      const { createClient } = await import("redis");
-      const c = createClient({ url: tcpUrl, socket: { connectTimeout: 5000 } });
+      const mod = await import("redis").catch(e => { _kvDiag = "tcp:noPkg:" + (e.message || e); return null; });
+      if (!mod) return (_kv = null);
+      const c = mod.createClient({ url: tcpUrl, socket: { connectTimeout: 4000 } });
       c.on("error", () => {});
       await c.connect();
       _kv = {
         get: async k => { const v = await c.get(k); try { return v ? JSON.parse(v) : null; } catch { return null; } },
         set: async (k, v, opt) => { await c.set(k, JSON.stringify(v), opt?.ex ? { EX: opt.ex } : undefined); }
       };
-      return _kv;
-    } catch {}
-  }
+      _kvDiag = "tcp:ok"; return _kv;
+    } catch (e) { _kvDiag = "tcp:err:" + (e.message || e); }
+  } else { _kvDiag = "no-env-vars"; }
   return (_kv = null);
+}
+function envSummary() {
+  return {
+    hasToken: !!process.env.TRAVELPAYOUTS_TOKEN,
+    hasRedisUrl: !!process.env.REDIS_URL,
+    hasKvUrl: !!process.env.KV_URL,
+    hasRestUrl: !!(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL),
+    hasRestTok: !!(process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN),
+    kvDiag: _kvDiag,
+  };
 }
 
 export default async function handler(req, res) {
@@ -63,6 +69,7 @@ export default async function handler(req, res) {
   const month = depart ? depart.slice(0, 7) : "any";
   const key = `prices:${origin}:${month}:${trip}`;
   const store = await kv();
+  if (req.query.debug === "1") return res.status(200).json({ diag: envSummary() });
 
   // 1) durable cache hit
   if (store) {
