@@ -108,13 +108,67 @@
   .incnote{font-size:10px;color:var(--muted);margin:0 0 12px}
   .india-off{fill:none;stroke:#0b1020;stroke-width:.8}
   body.cb{--cheap:#0072B2;--mid:#E6C229;--exp:#D55E00;--free:#0072B2;--voa:#56B4E9;--evisa:#E69F00;--embassy:#D55E00}
+  /* ───── Landing hero ───── */
+  .hero{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;
+    background:radial-gradient(1100px 700px at 70% -10%,#1a2548 0%,transparent 55%),radial-gradient(900px 600px at 5% 110%,#211446 0%,transparent 55%),var(--bg);
+    backdrop-filter:blur(4px);transition:opacity .5s,visibility .5s}
+  .hero.gone{opacity:0;visibility:hidden;pointer-events:none}
+  .hero h2{font-size:44px;font-weight:800;letter-spacing:-1.2px;margin:0 0 6px;text-align:center;line-height:1.1;max-width:760px}
+  .hero h2 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero .htag{color:var(--muted);font-size:14px;margin:0 0 28px;text-align:center;max-width:520px}
+  .hero .heroform{display:flex;gap:10px;background:rgba(20,27,48,.85);border:1px solid var(--line2);border-radius:18px;padding:8px;box-shadow:var(--shadow);width:100%;max-width:520px}
+  .hero .heroform .rs{position:relative;flex:1}
+  .hero .heroform .rs span{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:800;color:var(--muted)}
+  .hero .heroform input{width:100%;height:54px;padding:0 18px 0 36px;background:transparent;border:0;color:var(--ink);font-size:24px;font-weight:800;font-family:inherit;outline:0;letter-spacing:-.5px}
+  .hero .heroform button{height:54px;padding:0 22px;border:0;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.2px;box-shadow:0 8px 24px rgba(109,139,255,.35);transition:transform .15s}
+  .hero .heroform button:hover{transform:translateY(-1px)}
+  .hero .quick{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;justify-content:center}
+  .hero .quick button{background:rgba(20,27,48,.7);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:12px;font-weight:600;padding:9px 14px;border-radius:30px;cursor:pointer;transition:.15s}
+  .hero .quick button:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .hero .feat{display:flex;gap:24px;margin-top:34px;color:var(--muted);font-size:11.5px;flex-wrap:wrap;justify-content:center}
+  .hero .feat span b{color:var(--ink);font-weight:700}
+  .hero .skip{position:absolute;top:18px;right:22px;background:none;border:0;color:var(--muted);cursor:pointer;font-size:12px;font-family:inherit}
+  .hero .skip:hover{color:var(--ink)}
+  .openhero{font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:6px 11px;border-radius:20px;cursor:pointer;font-family:inherit}
+  /* ───── Mobile ───── */
+  @media (max-width:860px){
+    .hero h2{font-size:30px}
+    .hero .heroform input{font-size:20px}
+    #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    .topbar{flex-wrap:wrap;gap:10px;padding:10px 14px}.brand{font-size:17px}
+    .modeT{order:3;flex:1 1 100%;justify-content:center}
+    .modeT button{padding:7px 16px;font-size:12px}
+    aside{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:62vh;background:rgba(14,20,38,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);border-right:0;z-index:6;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.6);transition:max-height .3s}
+    aside.collapsed{max-height:120px}
+    aside::before{content:"";display:block;width:48px;height:4px;background:#2a3a64;border-radius:3px;margin:8px auto 0;cursor:grab}
+    main{height:calc(100vh - 56px - 100px);min-height:0}
+    .zoomctl{right:10px;top:auto;bottom:62vh;transform:none}
+    .zoomctl button{width:36px;height:36px;font-size:16px}
+    .legend{display:none}
+    .tag{top:8px;right:10px;font-size:10px;padding:5px 10px}
+    .pad{padding:12px 16px}
+    .scroll{max-height:38vh}
+  }
 </style>
 </head>
 <body>
+<!-- ───── Landing hero ───── -->
+<div class="hero" id="hero">
+  <button class="skip" id="heroSkip">Skip ›</button>
+  <h2>Where can you go for <em>less than ₹<span id="heroEcho">30,000</span></em>?</h2>
+  <p class="htag">Set a budget. We'll show every city — flights, visa, hotel included — that fits, on a live map.</p>
+  <form class="heroform" id="heroForm" autocomplete="off"><div class="rs"><span>₹</span><input id="heroBudget" type="text" inputmode="numeric" value="30,000"></div><button type="submit">Show me ›</button></form>
+  <div class="quick" id="heroQuick">
+    <button data-v="15000">Under ₹15k</button><button data-v="25000">₹25k</button><button data-v="40000">₹40k</button><button data-v="60000">₹60k</button><button data-v="100000">₹1L</button>
+  </div>
+  <div class="feat"><span>🟢 <b>Live</b> flight prices</span><span>🛂 <b>Visa</b> + approval %</span><span>🏨 Hotel + stay</span><span>🇮🇳 Built for Indian travellers</span></div>
+</div>
+
 <div id="app">
   <div class="topbar">
     <div class="brand">Fare<span>Map</span></div>
     <div class="modeT" id="mode"><button data-m="intl" class="on">🌍 International</button><button data-m="dom">🇮🇳 Domestic</button></div>
+    <button class="openhero" id="openhero">✨ Change budget</button>
     <span class="pill loading" id="status">Fetching live prices…</span>
   </div>
   <aside>
@@ -465,6 +519,31 @@ function zoomBy(factor){
 document.getElementById("zin").onclick=()=>zoomBy(1.6);
 document.getElementById("zout").onclick=()=>zoomBy(0.625);
 document.getElementById("zreset").onclick=()=>svg.call(zoom.transform,d3.zoomIdentity);
+
+// ───── Hero / landing ─────
+const hero=document.getElementById("hero"),heroInp=document.getElementById("heroBudget"),heroEcho=document.getElementById("heroEcho");
+const fmtNum=n=>(+String(n).replace(/[^\d]/g,"")).toLocaleString("en-IN");
+const parseNum=s=>+String(s).replace(/[^\d]/g,"")||0;
+function syncHeroEcho(){heroEcho.textContent=fmtNum(heroInp.value)}
+heroInp.addEventListener("input",e=>{const c=e.target.selectionStart,raw=parseNum(e.target.value);e.target.value=raw?fmtNum(raw):"";syncHeroEcho();try{e.target.setSelectionRange(c,c)}catch{}});
+document.querySelectorAll("#heroQuick button").forEach(b=>b.onclick=()=>{heroInp.value=fmtNum(b.dataset.v);syncHeroEcho();heroInp.focus()});
+function applyHeroBudget(v){state.budget=v;const b=document.getElementById("budget");if(+b.max<v)b.max=v;b.value=v;render();}
+document.getElementById("heroForm").addEventListener("submit",e=>{e.preventDefault();const v=parseNum(heroInp.value);if(v>500)applyHeroBudget(v);dismissHero();});
+document.getElementById("heroSkip").onclick=dismissHero;
+document.getElementById("openhero").onclick=()=>{heroInp.value=fmtNum(state.budget||30000);syncHeroEcho();hero.classList.remove("gone");};
+function dismissHero(){hero.classList.add("gone");}
+// auto-show once per session
+if(sessionStorage.getItem("heroSeen")==="1")hero.classList.add("gone");
+else sessionStorage.setItem("heroSeen","1");
+
+// ───── Mobile bottom-sheet toggle ─────
+const aside=document.querySelector("aside");
+let sheetCollapsed=false;
+function isMobile(){return matchMedia("(max-width:860px)").matches}
+function toggleSheet(){if(!isMobile())return;sheetCollapsed=!sheetCollapsed;aside.classList.toggle("collapsed",sheetCollapsed);}
+aside.addEventListener("click",e=>{if(!isMobile())return;const r=aside.getBoundingClientRect();if(e.clientY-r.top<22)toggleSheet();});
+// after picking a card on mobile, collapse so map is visible
+document.getElementById("list").addEventListener("click",()=>{if(isMobile()&&!sheetCollapsed){setTimeout(()=>{sheetCollapsed=true;aside.classList.add("collapsed")},200)}});
 </script>
 </body>
 </html>
