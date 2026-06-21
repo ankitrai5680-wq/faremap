@@ -67,11 +67,14 @@ export default async function handler(req, res) {
   }
 
   const month = depart ? depart.slice(0, 7) : "any";
-  const key = `prices:${origin}:${month}:${trip}`;
+  // Optional ?codes=A,B,C limits work to a specific subset (for zoom-to-refetch).
+  const codesParam = (req.query.codes || "").toString().toUpperCase().split(",").filter(Boolean).slice(0, 30);
+  const targets = codesParam.length ? codesParam : DESTINATIONS;
+  const keySuffix = codesParam.length ? `:codes:${codesParam.sort().join(",")}` : "";
+  const key = `prices:${origin}:${month}:${trip}${keySuffix}`;
   const store = await kv();
   if (req.query.debug === "1") return res.status(200).json({ diag: envSummary() });
 
-  // 1) durable cache hit
   if (store) {
     try {
       const hit = await store.get(key);
@@ -83,7 +86,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const results = await Promise.all(DESTINATIONS.map(async (dest) => {
+    const results = await Promise.all(targets.map(async (dest) => {
       const u = new URL("https://api.travelpayouts.com/aviasales/v3/prices_for_dates");
       u.searchParams.set("origin", origin);
       u.searchParams.set("destination", dest);

@@ -56,7 +56,9 @@ http.createServer(async (req,res)=>{
   const q=Object.fromEntries(url.searchParams);
   if(url.pathname==="/api/prices"){
     if(!TOKEN)return j(res,{fallback:true,reason:"no TP_TOKEN"});
-    const data=(await Promise.all(CODES.map(async c=>{const f=await flightsFor(q.origin||"DEL",c,q.depart||"",q.ret||"",q.trip==="oneway");return f.length?{code:c,flights:f}:null;}))).filter(Boolean);
+    const param=(q.codes||"").toUpperCase().split(",").filter(Boolean).slice(0,30);
+    const targets=param.length?param:CODES;
+    const data=(await Promise.all(targets.map(async c=>{const f=await flightsFor(q.origin||"DEL",c,q.depart||"",q.ret||"",q.trip==="oneway");return f.length?{code:c,flights:f}:null;}))).filter(Boolean);
     return j(res,{fallback:data.length===0,data});
   }
   if(url.pathname==="/api/hotels"){

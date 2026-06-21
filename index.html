@@ -304,8 +304,124 @@ const DOM_DEST=[
 ];
 const REGIONS=["North","South","East","West","Islands"];
 
-let state={mode:"intl",origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,prevRet:"2026-07-05",live:{flights:{},hotels:{},status:"loading"}};
-const POOL=()=>state.mode==="dom"?DOM_DEST:DEST;
+// ───── Extra airport catalog — revealed on zoom-in ─────
+// Each row: [IATA, city, country, continent, lon, lat, visaPreset, dailyINR]
+const VISA_BY_COUNTRY={ // sensible defaults for Indian passport
+  schengen:vz("embassy",9000,"2–3 weeks",82,"Schengen visa via VFS."),
+  uk:vz("embassy",11000,"3 weeks",80,"UK Standard Visitor visa."),
+  us:vz("embassy",16000,"long wait",75,"US B1/B2; in‑person interview."),
+  canada:vz("embassy",8000,"2–4 weeks",70,"Canada visitor visa (IRCC)."),
+  australia:vz("embassy",12000,"5–10 days",88,"Australia subclass 600."),
+  nz:vz("embassy",12000,"2–4 weeks",80,"NZ visitor visa + NZeTA."),
+  china:vz("embassy",6000,"4–7 days",90,"China L visa."),
+  japan:vz("embassy",450,"5–7 days",92,"Japan tourist visa (fee waived)."),
+  korea:vz("evisa",1300,"K‑ETA 3d",92,"Korea K‑ETA / visa."),
+  russia:vz("evisa",4000,"4 days",90,"Russia e‑visa."),
+  saudi:vz("evisa",10000,"1–3 days",95,"Saudi e‑visa."),
+  egypt:vz("evisa",2200,"3 days",93,"Egypt e‑visa or VoA."),
+  kenya:vz("evisa",2300,"2–3 days",95,"Kenya eTA."),
+  tanzania:vz("voa",4200,"On arrival/e‑visa",95,"Tanzania VoA / e‑visa."),
+  southAfrica:vz("embassy",2500,"1–2 weeks",85,"South Africa visa via VFS."),
+  morocco:vz("embassy",4000,"2 weeks",80,"Morocco short-stay visa."),
+  brazil:vz("evisa",3000,"5 days",92,"Brazil e‑visa."),
+  mexico:vz("evisa",3500,"3 days",90,"Mexico e‑visa for US-visa holders."),
+  argentina:vz("embassy",6000,"2 weeks",85,"Argentina tourist visa."),
+  peru:vz("free",0,"Visa‑free",98,"Visa-free up to 90 days."),
+  philippines:vz("free",0,"Visa‑free 14d",99,"Philippines visa‑free 14d."),
+  iran:vz("voa",4000,"On arrival",90,"Iran VoA at IKA."),
+  jordan:vz("voa",3500,"On arrival",95,"Jordan VoA."),
+  lebanon:vz("voa",3500,"On arrival",90,"Lebanon VoA."),
+  myanmar:vz("evisa",4000,"3 days",90,"Myanmar e‑visa."),
+  taiwan:vz("evisa",2000,"3 days",90,"Taiwan e‑visa for eligible travellers."),
+  hk:vz("free",0,"Visa‑free 14d",99,"Hong Kong visa‑free 14d."),
+  pakistan:vz("embassy",1000,"1–2 weeks",60,"Pakistan visa (restricted)."),
+  bangladesh:vz("free",0,"Visa‑free",99,"Bangladesh visa-on-arrival for Indians.")
+};
+const EXTRA_RAW=[
+ // SE/E Asia
+ ["KBV","Krabi","Thailand","Asia",98.99,8.10,"free",3000],
+ ["CNX","Chiang Mai","Thailand","Asia",98.96,18.77,"free",2500],
+ ["DAD","Da Nang","Vietnam","Asia",108.20,16.04,"evisa",2500],
+ ["REP","Siem Reap","Cambodia","Asia",103.81,13.41,"evisa",2500],
+ ["RGN","Yangon","Myanmar","Asia",96.13,16.91,"myanmar",2000],
+ ["MNL","Manila","Philippines","Asia",121.02,14.51,"philippines",3500],
+ ["CEB","Cebu","Philippines","Asia",123.98,10.31,"philippines",3000],
+ ["BJS","Beijing","China","Asia",116.60,40.08,"china",6000],
+ ["PVG","Shanghai","China","Asia",121.81,31.14,"china",7000],
+ ["TPE","Taipei","Taiwan","Asia",121.23,25.08,"taiwan",6000],
+ ["NRT","Tokyo (NRT)","Japan","Asia",140.39,35.77,"japan",12000],
+ ["KIX","Osaka","Japan","Asia",135.24,34.43,"japan",10000],
+ ["FUK","Fukuoka","Japan","Asia",130.45,33.59,"japan",9000],
+ // S Asia
+ ["KHI","Karachi","Pakistan","Asia",67.16,24.91,"pakistan",2500],
+ ["LHE","Lahore","Pakistan","Asia",74.40,31.52,"pakistan",2500],
+ ["DAC","Dhaka","Bangladesh","Asia",90.40,23.84,"bangladesh",2500],
+ ["PBH","Paro","Bhutan","Asia",89.42,27.40,"free",6000],
+ // ME
+ ["RUH","Riyadh","Saudi Arabia","Asia",46.69,24.96,"saudi",6000],
+ ["JED","Jeddah","Saudi Arabia","Asia",39.16,21.68,"saudi",6000],
+ ["KWI","Kuwait","Kuwait","Asia",47.97,29.23,"voa",6500],
+ ["BEY","Beirut","Lebanon","Asia",35.49,33.83,"lebanon",4000],
+ ["AMM","Amman","Jordan","Asia",35.99,31.72,"jordan",4500],
+ ["IKA","Tehran","Iran","Asia",51.31,35.42,"iran",3500],
+ // Europe
+ ["BCN","Barcelona","Spain","Europe",2.08,41.30,"schengen",11000],
+ ["MAD","Madrid","Spain","Europe",-3.57,40.49,"schengen",10000],
+ ["LIS","Lisbon","Portugal","Europe",-9.13,38.78,"schengen",9000],
+ ["BER","Berlin","Germany","Europe",13.50,52.36,"schengen",10000],
+ ["MUC","Munich","Germany","Europe",11.79,48.35,"schengen",11000],
+ ["FRA","Frankfurt","Germany","Europe",8.57,50.03,"schengen",11000],
+ ["ZRH","Zürich","Switzerland","Europe",8.55,47.45,"schengen",18000],
+ ["GVA","Geneva","Switzerland","Europe",6.11,46.24,"schengen",18000],
+ ["VIE","Vienna","Austria","Europe",16.57,48.12,"schengen",10000],
+ ["PRG","Prague","Czechia","Europe",14.26,50.10,"schengen",7000],
+ ["BUD","Budapest","Hungary","Europe",19.26,47.44,"schengen",7000],
+ ["WAW","Warsaw","Poland","Europe",20.97,52.17,"schengen",6500],
+ ["ATH","Athens","Greece","Europe",23.95,37.94,"schengen",9000],
+ ["CPH","Copenhagen","Denmark","Europe",12.66,55.62,"schengen",13000],
+ ["ARN","Stockholm","Sweden","Europe",17.92,59.65,"schengen",12000],
+ ["OSL","Oslo","Norway","Europe",11.10,60.19,"schengen",14000],
+ ["HEL","Helsinki","Finland","Europe",24.96,60.32,"schengen",11000],
+ ["DUB","Dublin","Ireland","Europe",-6.27,53.42,"uk",13000],
+ ["EDI","Edinburgh","UK","Europe",-3.37,55.95,"uk",12000],
+ ["KEF","Reykjavik","Iceland","Europe",-22.61,63.99,"schengen",18000],
+ ["BRU","Brussels","Belgium","Europe",4.49,50.90,"schengen",11000],
+ ["SVO","Moscow","Russia","Europe",37.41,55.97,"russia",6000],
+ // Africa
+ ["CMN","Casablanca","Morocco","Africa",-7.59,33.37,"morocco",4000],
+ ["RAK","Marrakech","Morocco","Africa",-7.95,31.61,"morocco",4500],
+ ["TUN","Tunis","Tunisia","Africa",10.23,36.85,"evisa",3500],
+ ["ADD","Addis Ababa","Ethiopia","Africa",38.80,8.98,"evisa",3500],
+ ["LOS","Lagos","Nigeria","Africa",3.32,6.58,"evisa",4500],
+ ["ACC","Accra","Ghana","Africa",-0.17,5.61,"evisa",4500],
+ ["CPT","Cape Town","S. Africa","Africa",18.60,-33.97,"southAfrica",6500],
+ // Americas
+ ["MEX","Mexico City","Mexico","N. America",-99.07,19.44,"mexico",6500],
+ ["CUN","Cancún","Mexico","N. America",-86.87,21.04,"mexico",7000],
+ ["MIA","Miami","USA","N. America",-80.29,25.79,"us",13000],
+ ["ORD","Chicago","USA","N. America",-87.90,41.98,"us",13000],
+ ["SFO","San Francisco","USA","N. America",-122.38,37.62,"us",14000],
+ ["SEA","Seattle","USA","N. America",-122.31,47.45,"us",13000],
+ ["BOS","Boston","USA","N. America",-71.01,42.36,"us",14000],
+ ["IAD","Washington DC","USA","N. America",-77.46,38.94,"us",13000],
+ ["YUL","Montreal","Canada","N. America",-73.74,45.47,"canada",10000],
+ ["YYC","Calgary","Canada","N. America",-114.01,51.11,"canada",10000],
+ ["LIM","Lima","Peru","S. America",-77.11,-12.02,"peru",5000],
+ ["CUZ","Cusco","Peru","S. America",-71.94,-13.54,"peru",4000],
+ ["EZE","Buenos Aires","Argentina","S. America",-58.54,-34.82,"argentina",6500],
+ ["BOG","Bogotá","Colombia","S. America",-74.14,4.70,"evisa",4000],
+ // Oceania
+ ["MEL","Melbourne","Australia","Oceania",144.84,-37.67,"australia",11000],
+ ["BNE","Brisbane","Australia","Oceania",153.12,-27.39,"australia",11000],
+ ["PER","Perth","Australia","Oceania",115.97,-31.94,"australia",10000],
+ ["CHC","Christchurch","NZ","Oceania",172.53,-43.49,"nz",11000],
+ ["NAN","Nadi","Fiji","Oceania",177.44,-17.75,"free",9000],
+];
+const EXTRA=EXTRA_RAW.map(r=>({code:r[0],city:r[1],country:r[2],cont:r[3],coord:[r[4],r[5]],base:55000,dur:600,daily:r[7],visa:VISA_BY_COUNTRY[r[6]]||vz("evisa",3000,"varies",85,"Check official site.")}));
+const EXTRA_SET=new Set(EXTRA.map(d=>d.code));
+
+let state={mode:"intl",origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,prevRet:"2026-07-05",visited:new Set(),live:{flights:{},hotels:{},status:"loading"}};
+const POOL=()=>state.mode==="dom"?DOM_DEST:DEST.concat(EXTRA);
 
 const svg=d3.select("#map"),W=1000,H=720;
 let projection=d3.geoNaturalEarth1();
@@ -317,7 +433,31 @@ const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
 let color,SW,LD=[],cur=d3.zoomIdentity;
 const inB=d=>d.allIn<=state.budget;
 
-const zoom=d3.zoom().scaleExtent([1,8]).on("zoom",ev=>{cur=ev.transform;gRoot.attr("transform",cur);layout();});
+const zoom=d3.zoom().scaleExtent([1,8]).on("zoom",ev=>{cur=ev.transform;gRoot.attr("transform",cur);layout();scheduleDiscover();});
+
+// Discover EXTRA airports that have entered the viewport — fetch live fares for them.
+let _discT,_discBusy=false;
+function scheduleDiscover(){clearTimeout(_discT);_discT=setTimeout(discoverInView,450);}
+async function discoverInView(){
+  if(state.mode==="dom"||_discBusy||cur.k<1.4)return;
+  const toFetch=[];
+  for(const d of EXTRA){
+    if(state.visited.has(d.code)||state.live.flights[d.code])continue;
+    const s=cur.apply(projection(d.coord));
+    if(s[0]<-20||s[0]>W+20||s[1]<-20||s[1]>H+20)continue;
+    toFetch.push(d.code);
+    if(toFetch.length>=25)break;
+  }
+  if(!toFetch.length)return;
+  _discBusy=true;toFetch.forEach(c=>state.visited.add(c));
+  setStatus("loading");
+  try{
+    const qs=`origin=${state.origin}&depart=${state.depart}&ret=${state.ret}&trip=${state.trip}&codes=${toFetch.join(",")}`;
+    const r=await fetch("/api/prices?"+qs);const j=await r.json();
+    if(j&&j.data&&j.data.length){j.data.forEach(x=>{if(x.flights&&x.flights.length)state.live.flights[x.code]=x.flights;});}
+  }catch{}
+  _discBusy=false;setStatus(state.live.status);render();
+}
 
 function nights(){if(state.trip==="oneway"||!state.ret)return 0;const a=new Date(state.depart),b=new Date(state.ret);const n=Math.round((b-a)/864e5);return n>0?n:1;}
 function genFlights(base){return[{air:"Lowest fare",dep:"—",arr:"",dur:"varies",stops:"Nonstop",ns:1,price:base},{air:"Alt route",dep:"—",arr:"",dur:"varies",stops:"1 stop",ns:0,price:Math.round(base*1.12/10)*10}];}
@@ -335,7 +475,7 @@ function compute(){
     return {...d,flights:fa,flight,fLive,stay,stayLive,allIn,hasNonstop:fa.some(f=>f.ns)};
   });
 }
-function passFilters(d){if(state.visafree&&d.visa.t!=="free")return false;if(state.nonstop&&!d.hasNonstop)return false;if(state.cont!=="all"&&d.cont!==state.cont)return false;return true;}
+function passFilters(d){if(state.visafree&&d.visa.t!=="free")return false;if(state.nonstop&&!d.hasNonstop)return false;if(state.cont!=="all"&&d.cont!==state.cont)return false;if(EXTRA_SET.has(d.code)&&!state.live.flights[d.code])return false;return true;}
 function sortFn(a,b){if(state.sort==="visa")return(V[a.visa.t].ease-V[b.visa.t].ease)||(b.visa.approval-a.visa.approval)||(a.allIn-b.allIn);if(state.sort==="fast")return a.dur-b.dur;return a.allIn-b.allIn;}
 function pcol(p){return p>=95?"var(--free)":p>=85?"var(--evisa)":"var(--exp)"}
 function arcPath(a,b){const p1=projection(a),p2=projection(b),dx=p2[0]-p1[0],dy=p2[1]-p1[1],dr=Math.hypot(dx,dy)||1;const mx=(p1[0]+p2[0])/2,my=(p1[1]+p2[1])/2,nx=-dy/dr,ny=dx/dr,bow=dr*0.18;return `M${p1[0]},${p1[1]} Q${mx+nx*bow},${my+ny*bow} ${p2[0]},${p2[1]}`;}
