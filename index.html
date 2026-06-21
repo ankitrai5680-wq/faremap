@@ -44,13 +44,14 @@
   input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1}
   .cfield.trip .toggle{padding:3px}
   .cfield.trip .toggle button{padding:6px 14px;font-size:12px}
-  .budgetcell{flex:1;min-width:280px;display:flex;align-items:center;gap:14px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:8px 14px}
+  .budgetcell{flex:1 1 380px;min-width:280px;display:flex;flex-direction:column;gap:5px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:8px 14px}
+  .budgetcell .brow{display:flex;align-items:center;gap:12px;min-width:0}
   .budgetcell .bgbox{display:flex;flex-direction:column;min-width:0;flex:none}
-  .budgetcell .bgbox label{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
-  .budgetcell .bigval{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+  .budgetcell .bgbox label{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .budgetcell .bigval{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1.1;white-space:nowrap}
   .budgetcell .bigval small{font-size:11px;color:var(--muted);font-weight:600;margin-left:4px}
   .budgetcell input[type=range]{flex:1;margin:0;accent-color:var(--accent);min-width:80px}
-  .csummary{font-size:12px;color:var(--muted);white-space:nowrap;padding-left:4px}
+  .csummary{font-size:11.5px;color:var(--muted);padding:0 2px}
   .csummary b{color:var(--ink)}
   .cbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;width:auto;flex:none;white-space:nowrap;margin-top:0}
   .cbtn:hover{border-color:var(--accent)}
@@ -71,7 +72,7 @@
   .scroll{overflow-y:auto;flex:1;min-height:0}
   h1{font-size:20px;margin:0 0 2px;letter-spacing:-.3px}h1 span{color:var(--accent)}
   .sub{color:var(--muted);font-size:12px;margin:0}
-  .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--line);margin-top:8px}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--line)}
   .pill.live{color:#28d17c;border-color:#28d17c55}.pill.demo{color:#ffb13b;border-color:#ffb13b55}.pill.loading{color:var(--muted)}
   label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 6px}
   select,input[type=date]{width:100%;padding:9px 11px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:13px}
@@ -199,9 +200,9 @@
 <!-- ───── Landing hero ───── -->
 <div class="hero" id="hero">
   <button class="skip" id="heroSkip">Skip ›</button>
-  <h2>Where can you go for <em>less than ₹<span id="heroEcho">30,000</span></em>?</h2>
+  <h2>Where can you go for <em>less than ₹<span id="heroEcho">1,00,000</span></em>?</h2>
   <p class="htag">Set a budget. We'll show every city — flights, visa, hotel included — that fits, on a live map.</p>
-  <form class="heroform" id="heroForm" autocomplete="off"><div class="rs"><span>₹</span><input id="heroBudget" type="text" inputmode="numeric" value="30,000"></div><button type="submit">Show me ›</button></form>
+  <form class="heroform" id="heroForm" autocomplete="off"><div class="rs"><span>₹</span><input id="heroBudget" type="text" inputmode="numeric" value="1,00,000"></div><button type="submit">Show me ›</button></form>
   <div class="quick" id="heroQuick">
     <button data-v="15000">Under ₹15k</button><button data-v="25000">₹25k</button><button data-v="40000">₹40k</button><button data-v="60000">₹60k</button><button data-v="100000">₹1L</button>
   </div>
@@ -223,10 +224,12 @@
       <div class="cfield"><label>Depart</label><input type="date" id="depart" value="2026-06-28"></div>
       <div class="cfield"><label>Return</label><input type="date" id="return" value="2026-07-05"></div>
       <div class="budgetcell">
-        <div class="bgbox"><label>Budget · <span id="budgetLabel">flight + visa + stay</span></label><div class="bigval">₹<span id="budgetVal">—</span><small>or less</small></div></div>
-        <input type="range" id="budget" min="0" max="300000" value="300000" step="1000">
+        <div class="brow">
+          <div class="bgbox"><label>Budget · <span id="budgetLabel">flight + visa + stay</span></label><div class="bigval">₹<span id="budgetVal">—</span><small>or less</small></div></div>
+          <input type="range" id="budget" min="0" max="300000" value="300000" step="1000">
+        </div>
+        <div class="csummary"><b id="cnt">—</b> of <span id="tot">—</span> fit · cheapest <b id="cheapest">—</b></div>
       </div>
-      <div class="csummary"><b id="cnt">—</b> of <span id="tot">—</span> fit · cheapest <b id="cheapest">—</b></div>
       <button class="cbtn surprise" id="surprise">🎲 Surprise me</button>
       <button class="cbtn" id="collapse">Filters ▼</button>
     </div>
@@ -651,7 +654,8 @@ function drawList(data){
         </div>
         <div class="incnote">A row is struck‑through when you've turned it off under “Count toward budget”.</div>
         <div class="sech">✈ Top cheapest flights ${d.fLive?'<span style="color:#28d17c">· live</span>':''}</div>
-        ${d.flights.slice(0,2).map(f=>`<div class="fl"><div class="air">${f.air}</div><div class="tm">${f.dep}${f.arr?" – "+f.arr:""}<small>${f.stops} · ${f.dur}</small></div><div class="fp">${fmt(f.price)}</div><a class="book" href="${f.link||"#"}" ${f.link?'target="_blank"':'onclick="return false"'}>Book</a></div>`).join("")}
+        ${d.fLive?'<div class="incnote" style="margin:-4px 0 8px">Cheapest in your travel month — actual date shown per row.</div>':''}
+        ${d.flights.slice(0,2).map(f=>{const top=f.date?(f.date+(f.time?" · "+f.time:"")):(f.time||f.dep||"—");const sub=[f.stops,f.dur].filter(Boolean).join(" · ");return `<div class="fl"><div class="air">${f.air}</div><div class="tm">${top}<small>${sub}</small></div><div class="fp">${fmt(f.price)}</div><a class="book" href="${f.link||"#"}" ${f.link?'target="_blank" rel="noopener"':'onclick="return false"'}>Book</a></div>`}).join("")}
         ${d.visa.t==="dom"?`<div class="vnote" style="margin-top:14px;font-size:12px">🛂 Domestic trip — no visa or passport needed.</div>`:`
         <div class="sech" style="margin-top:14px">🛂 Visa for Indian passport <span style="color:var(--muted);text-transform:none;letter-spacing:0;float:right">✓ verified ${d.visa.lv}</span></div>
         <div class="vgrid"><div class="vbox"><div class="k">Cost</div><div class="v">${d.visa.cost?fmt(d.visa.cost):"Free"}</div></div><div class="vbox"><div class="k">Processing</div><div class="v">${d.visa.time}</div></div><div class="vbox"><div class="k">Type</div><div class="v" style="color:${vb.color}">${vb.label}</div></div></div>

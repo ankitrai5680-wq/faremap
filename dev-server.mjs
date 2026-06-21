@@ -18,9 +18,18 @@ const AIR = {AI:"Air India",IX:"AI Express",["6E"]:"IndiGo",UK:"Vistara",SG:"Spi
 const cache = new Map();
 
 function hm(min){return `${Math.floor(min/60)}h ${min%60}m`}
-function mapOffer(o){
+function fmtDate(iso){
+  if(!iso)return "";
+  const d=new Date(iso);if(isNaN(d))return "";
+  return d.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+}
+function mapOffer(o,trip){
   const t=(o.departure_at||"").slice(11,16);
-  return {air:AIR[o.airline]||o.airline,dep:t||"—",arr:"",dur:o.duration?hm(o.duration):"varies",
+  // Travelpayouts `duration` for round trips is total round-trip flight time (confusing).
+  // Only surface duration on one-way; on round-trip omit (UI shows "round trip" label).
+  const showDur = trip!=="round" && o.duration;
+  return {air:AIR[o.airline]||o.airline,time:t||"—",date:fmtDate(o.departure_at),
+    dur:showDur?hm(o.duration):"",
     stops:o.transfers===0?"Nonstop":`${o.transfers} stop`,ns:o.transfers===0,price:o.price,
     link:"https://www.aviasales.com"+(o.link||"")};
 }
@@ -34,7 +43,7 @@ async function flightsFor(origin,dest,depart,ret,oneway){
   if(depart)u.searchParams.set("departure_at",depart.slice(0,7));
   if(ret&&!oneway)u.searchParams.set("return_at",ret.slice(0,7));
   u.searchParams.set("token",TOKEN);
-  try{const r=await fetch(u);const j=await r.json();const offers=(j.data||[]).map(mapOffer);cache.set(key,offers);return offers;}
+  try{const r=await fetch(u);const j=await r.json();const offers=(j.data||[]).map(o=>mapOffer(o,oneway?"oneway":"round"));cache.set(key,offers);return offers;}
   catch{cache.set(key,[]);return[];}
 }
 async function hotelFor(code,depart,ret){

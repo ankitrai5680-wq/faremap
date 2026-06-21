@@ -99,10 +99,21 @@ export default async function handler(req, res) {
       u.searchParams.set("token", token);
       const r = await fetch(u);
       const j = await r.json();
+      const fmtDate = iso => {
+        if (!iso) return "";
+        const d = new Date(iso); if (isNaN(d)) return "";
+        return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+      };
+      const hm = m => `${Math.floor(m/60)}h ${m%60}m`;
       const offers = (j.data || []).map(o => ({
-        air: o.airline, price: o.price, dep: o.departure_at, dur: o.duration,
+        air: o.airline,
+        price: o.price,
+        date: fmtDate(o.departure_at),
+        time: (o.departure_at || "").slice(11, 16),
+        dur: (trip !== "round" && o.duration) ? hm(o.duration) : "",
         stops: o.transfers === 0 ? "Nonstop" : `${o.transfers} stop`,
-        ns: o.transfers === 0, link: `https://www.aviasales.com${o.link || ""}`
+        ns: o.transfers === 0,
+        link: `https://www.aviasales.com${o.link || ""}`
       }));
       return offers.length ? { code: dest, flights: offers } : null;
     }));
