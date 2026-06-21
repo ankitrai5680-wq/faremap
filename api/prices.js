@@ -15,20 +15,41 @@
 const DESTINATIONS = ["KTM","CMB","BKK","TAS","KUL","DOH","DXB","HKT","HAN","SGN","MLE","SIN","DPS","IST","LHR","CDG","NBO","CAI","MRU","JNB","JFK","YYZ","GRU","SYD","ALA","AUH","MCT","CGK","HKG","ICN","PNH","FCO","AMS","GYD","TBS","ZNZ","SEZ","AKL","LAX","YVR","GOI","SXR","IXL","COK","MAA","BLR","HYD","BOM","UDR","JAI","VNS","CCU","GAU","IXZ"];
 const TTL = 21600; // 6h
 
-// Lazy Redis client — works with Vercel KV *or* Upstash Redis env naming.
-// (Edge Config will NOT work here: it can't be written to per-request.)
+// Lazy cache client — supports either:
+//   (a) Upstash REST: KV_REST_API_URL / UPSTASH_REDIS_REST_URL + token  ← preferred
+//   (b) Redis TCP:    REDIS_URL  (e.g. Vercel Marketplace Redis add-on)
+// Same .get/.set interface either way. (Edge Config WON'T work — can't write per-request.)
 let _kv = null, _kvTried = false;
 async function kv() {
   if (_kvTried) return _kv;
   _kvTried = true;
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return (_kv = null);
-  try {
-    const { Redis } = await import("@upstash/redis");
-    _kv = new Redis({ url, token });
-  } catch { _kv = null; }
-  return _kv;
+  // (a) REST
+  const restUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const restTok = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (restUrl && restTok) {
+    try {
+      const { Redis } = await import("@upstash/redis");
+      const c = new Redis({ url: restUrl, token: restTok });
+      _kv = { get: k => c.get(k), set: (k, v, opt) => c.set(k, v, opt) };
+      return _kv;
+    } catch {}
+  }
+  // (b) TCP
+  const tcpUrl = process.env.REDIS_URL || process.env.KV_URL;
+  if (tcpUrl) {
+    try {
+      const { createClient } = await import("redis");
+      const c = createClient({ url: tcpUrl, socket: { connectTimeout: 5000 } });
+      c.on("error", () => {});
+      await c.connect();
+      _kv = {
+        get: async k => { const v = await c.get(k); try { return v ? JSON.parse(v) : null; } catch { return null; } },
+        set: async (k, v, opt) => { await c.set(k, JSON.stringify(v), opt?.ex ? { EX: opt.ex } : undefined); }
+      };
+      return _kv;
+    } catch {}
+  }
+  return (_kv = null);
 }
 
 export default async function handler(req, res) {
