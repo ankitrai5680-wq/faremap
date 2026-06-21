@@ -13,6 +13,7 @@
 // Docs: https://support.travelpayouts.com/hc/en-us/articles/203956163-Aviasales-Data-API
 
 const DESTINATIONS = ["KTM","CMB","BKK","TAS","KUL","DOH","DXB","HKT","HAN","SGN","MLE","SIN","DPS","IST","LHR","CDG","NBO","CAI","MRU","JNB","JFK","YYZ","GRU","SYD","ALA","AUH","MCT","CGK","HKG","ICN","PNH","FCO","AMS","GYD","TBS","ZNZ","SEZ","AKL","LAX","YVR","GOI","SXR","IXL","COK","MAA","BLR","HYD","BOM","UDR","JAI","VNS","CCU","GAU","IXZ"];
+const AIRLINE_NAMES = {AI:"Air India",IX:"AI Express","6E":"IndiGo",UK:"Vistara",SG:"SpiceJet",QR:"Qatar",EK:"Emirates",EY:"Etihad",TG:"Thai",FD:"Thai AirAsia",AK:"AirAsia",VJ:"Vietjet",SQ:"Singapore",MH:"Malaysia",UL:"SriLankan",WY:"Oman Air",TK:"Turkish",BA:"British A.",LH:"Lufthansa",AF:"Air France",KL:"KLM",KE:"Korean",CX:"Cathay",ET:"Ethiopian",KQ:"Kenya",MS:"EgyptAir",MK:"Air Mauritius",QF:"Qantas",NZ:"Air NZ",HY:"Uzbekistan",KC:"Air Astana",J2:"AZAL",B3:"Bhutan",RA:"Nepal A.",XJ:"Thai AirAsia X",D7:"AirAsia X",C6:"CanJet",DP:"Pobeda"};
 const TTL = 21600; // 6h
 
 // Lazy cache client — supports REST or TCP Redis. ?debug=1 exposes which path was tried.
@@ -71,8 +72,8 @@ export default async function handler(req, res) {
   const codesParam = (req.query.codes || "").toString().toUpperCase().split(",").filter(Boolean).slice(0, 30);
   const targets = codesParam.length ? codesParam : DESTINATIONS;
   const keySuffix = codesParam.length ? `:codes:${codesParam.sort().join(",")}` : "";
-  // v2 = new offer shape (date/time/dur separate); bump to invalidate stale v1 entries
-  const key = `prices:v2:${origin}:${month}:${trip}${keySuffix}`;
+  // v3 = airline names mapped; bump to invalidate previous schemas
+  const key = `prices:v3:${origin}:${month}:${trip}${keySuffix}`;
   const store = await kv();
   if (req.query.debug === "1") return res.status(200).json({ diag: envSummary() });
 
@@ -107,7 +108,7 @@ export default async function handler(req, res) {
       };
       const hm = m => `${Math.floor(m/60)}h ${m%60}m`;
       const offers = (j.data || []).map(o => ({
-        air: o.airline,
+        air: AIRLINE_NAMES[o.airline] || o.airline,
         price: o.price,
         date: fmtDate(o.departure_at),
         time: (o.departure_at || "").slice(11, 16),
