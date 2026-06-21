@@ -71,7 +71,8 @@ export default async function handler(req, res) {
   const codesParam = (req.query.codes || "").toString().toUpperCase().split(",").filter(Boolean).slice(0, 30);
   const targets = codesParam.length ? codesParam : DESTINATIONS;
   const keySuffix = codesParam.length ? `:codes:${codesParam.sort().join(",")}` : "";
-  const key = `prices:${origin}:${month}:${trip}${keySuffix}`;
+  // v2 = new offer shape (date/time/dur separate); bump to invalidate stale v1 entries
+  const key = `prices:v2:${origin}:${month}:${trip}${keySuffix}`;
   const store = await kv();
   if (req.query.debug === "1") return res.status(200).json({ diag: envSummary() });
 
