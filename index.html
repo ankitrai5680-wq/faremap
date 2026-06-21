@@ -25,10 +25,14 @@
   .modeT{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:30px;padding:4px}
   .modeT button{border:0;background:transparent;color:var(--muted);padding:8px 20px;border-radius:30px;cursor:pointer;font-size:13px;font-weight:700;transition:.18s;font-family:inherit}
   .modeT button.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(109,139,255,.4)}
-  #app{display:grid;grid-template-columns:1fr 380px;grid-template-rows:auto auto 1fr;height:100vh}
+  #app{display:grid;grid-template-columns:380px 1fr;grid-template-rows:auto auto 1fr;height:100vh}
   .topbar,.controlbar{grid-column:1/3}
-  aside{grid-row:3;grid-column:2;background:linear-gradient(180deg,var(--panel),var(--bg2));border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
-  main{grid-row:3;grid-column:1}
+  aside{grid-row:3;grid-column:1;background:linear-gradient(180deg,var(--panel),var(--bg2));border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  main{grid-row:3;grid-column:2}
+  /* sort pill inside list header */
+  .lsort{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:3px}
+  .lsort button{border:0;background:transparent;color:var(--muted);padding:5px 11px;border-radius:18px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;letter-spacing:.2px}
+  .lsort button.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff}
   /* ── horizontal control strip ── */
   .controlbar{background:linear-gradient(180deg,var(--bg2),var(--panel));border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:0}
   .crow{display:flex;align-items:center;gap:14px;padding:11px 22px;flex-wrap:wrap}
@@ -59,7 +63,8 @@
   .crow.advanced .toggle button{padding:6px 12px;font-size:12px}
   .crow.advanced .chk{padding:6px 10px;font-size:11.5px;gap:5px}
   /* aside (cards panel) tweaks */
-  aside .listHeader{padding:14px 18px 8px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  aside .listHeader{padding:13px 18px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  aside .listHeader > div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
   aside .listHeader h3{margin:0;font-size:14px;font-weight:800;letter-spacing:-.3px}
   aside .listHeader span{font-size:11px;color:var(--muted);font-weight:600}
   .pad{padding:16px 20px}
@@ -237,13 +242,15 @@
         <div class="chip" data-f="nonstop">✈ Nonstop only</div>
         <div class="chip" id="cbChip">👁 Colour‑blind</div>
       </div></div>
-      <div class="advgroup"><span>Sort</span><div class="toggle" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div></div>
     </div>
   </div>
 
   <!-- left panel: suggestion cards -->
   <aside>
-    <div class="listHeader"><h3 id="listTitle">Suggestions</h3><span id="listSub">— loading</span></div>
+    <div class="listHeader">
+      <div><h3 id="listTitle">Suggestions</h3><span id="listSub">— loading</span></div>
+      <div class="lsort" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div>
+    </div>
     <div class="scroll pad" id="list"></div>
     <div class="pad" style="border-top:1px solid var(--line)"><p class="disc" id="disc"></p></div>
   </aside>
@@ -663,13 +670,13 @@ function applyCollapse(){document.getElementById("filtersBody").classList.toggle
 function applyMode(){
   document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x.dataset.m===state.mode));
   const dom=state.mode==="dom";
-  document.getElementById("sub").textContent=dom?"Where in India can you fly — by budget?":"Where can you afford to go — worldwide?";
-  // hide visa controls in domestic mode
-  document.querySelector('#parts .chk:nth-child(2)').style.display=dom?"none":"";
-  document.querySelector('#filters .chip[data-f="visafree"]').style.display=dom?"none":"";
-  document.querySelectorAll('#sort button')[1].style.display=dom?"none":"";
+  const setDisp=(sel,off)=>{const e=document.querySelector(sel);if(e)e.style.display=off?"none":"";};
+  setDisp('#parts .chk:nth-child(2)',dom);                  // hide Visa cost toggle
+  setDisp('#filters .chip[data-f="visafree"]',dom);         // hide Visa-free filter
+  const sortBtns=document.querySelectorAll('#sort button');
+  if(sortBtns[1])sortBtns[1].style.display=dom?"none":"";   // hide "Easiest visa" sort
   state.cont="all";if(dom&&state.sort==="visa")state.sort="cheap";
-  document.querySelectorAll('#sort button').forEach(x=>x.classList.toggle("on",x.dataset.s===state.sort));
+  sortBtns.forEach(x=>x.classList.toggle("on",x.dataset.s===state.sort));
   buildChips();
 }
 document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{if(state.mode===b.dataset.m)return;state.mode=b.dataset.m;state.open=new Set();state.flash=null;state.budget=9e9;applyMode();render();fitToData();loadLive();});
