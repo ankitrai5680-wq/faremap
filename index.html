@@ -25,8 +25,43 @@
   .modeT{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:30px;padding:4px}
   .modeT button{border:0;background:transparent;color:var(--muted);padding:8px 20px;border-radius:30px;cursor:pointer;font-size:13px;font-weight:700;transition:.18s;font-family:inherit}
   .modeT button.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(109,139,255,.4)}
-  #app{display:grid;grid-template-columns:408px 1fr;grid-template-rows:auto 1fr;height:100vh}
-  aside{background:linear-gradient(180deg,var(--panel),var(--bg2));border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  #app{display:grid;grid-template-columns:1fr 380px;grid-template-rows:auto auto 1fr;height:100vh}
+  .topbar,.controlbar{grid-column:1/3}
+  aside{grid-row:3;grid-column:2;background:linear-gradient(180deg,var(--panel),var(--bg2));border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  main{grid-row:3;grid-column:1}
+  /* ── horizontal control strip ── */
+  .controlbar{background:linear-gradient(180deg,var(--bg2),var(--panel));border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:0}
+  .crow{display:flex;align-items:center;gap:14px;padding:11px 22px;flex-wrap:wrap}
+  .crow.primary{padding-bottom:14px}
+  .cfield{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .cfield label{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0;font-weight:700}
+  .cfield select,.cfield input[type=date]{padding:8px 11px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-size:13px;font-family:inherit;min-width:160px;color-scheme:dark}
+  input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.85) sepia(.4) saturate(4) hue-rotate(195deg);opacity:.85;cursor:pointer}
+  input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1}
+  .cfield.trip .toggle{padding:3px}
+  .cfield.trip .toggle button{padding:6px 14px;font-size:12px}
+  .budgetcell{flex:1;min-width:280px;display:flex;align-items:center;gap:14px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:8px 14px}
+  .budgetcell .bgbox{display:flex;flex-direction:column;min-width:0;flex:none}
+  .budgetcell .bgbox label{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
+  .budgetcell .bigval{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+  .budgetcell .bigval small{font-size:11px;color:var(--muted);font-weight:600;margin-left:4px}
+  .budgetcell input[type=range]{flex:1;margin:0;accent-color:var(--accent);min-width:80px}
+  .csummary{font-size:12px;color:var(--muted);white-space:nowrap;padding-left:4px}
+  .csummary b{color:var(--ink)}
+  .cbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;width:auto;flex:none;white-space:nowrap;margin-top:0}
+  .cbtn:hover{border-color:var(--accent)}
+  .cbtn.surprise{background:linear-gradient(90deg,var(--accent),var(--accent2));border-color:transparent;box-shadow:0 6px 18px rgba(109,139,255,.3)}
+  .crow.advanced{padding-top:0;border-top:1px solid var(--line);background:rgba(8,11,22,.5);display:none}
+  .crow.advanced.open{display:flex}
+  .advgroup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .advgroup>span{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700;margin-right:2px}
+  .crow.advanced .toggle{padding:3px}
+  .crow.advanced .toggle button{padding:6px 12px;font-size:12px}
+  .crow.advanced .chk{padding:6px 10px;font-size:11.5px;gap:5px}
+  /* aside (cards panel) tweaks */
+  aside .listHeader{padding:14px 18px 8px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  aside .listHeader h3{margin:0;font-size:14px;font-weight:800;letter-spacing:-.3px}
+  aside .listHeader span{font-size:11px;color:var(--muted);font-weight:600}
   .pad{padding:16px 20px}
   .scroll{overflow-y:auto;flex:1;min-height:0}
   h1{font-size:20px;margin:0 0 2px;letter-spacing:-.3px}h1 span{color:var(--accent)}
@@ -46,10 +81,7 @@
   .fhead{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
   .fhead span{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
   .fhead button{background:none;border:0;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer}
-  .fsum{display:none;font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
-  .sticky.collapsed .filtersBody{display:none}
-  .sticky.collapsed .fsum{display:block}
-  .surprise{margin-top:10px;width:100%;border:0;background:linear-gradient(90deg,#5b8cff,#28d17c);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:10px;cursor:pointer}
+  .fsum{display:none}
   .parts{display:flex;gap:8px;margin-top:6px}
   .chk{flex:1;display:flex;align-items:center;gap:6px;justify-content:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 6px;font-size:12px;cursor:pointer;user-select:none}
   .chk input{accent-color:var(--accent);margin:0}.chk.off{opacity:.45}
@@ -134,20 +166,27 @@
   @media (max-width:860px){
     .hero h2{font-size:30px}
     .hero .heroform input{font-size:20px}
-    #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+    .topbar,.controlbar{grid-column:1}
     .topbar{flex-wrap:wrap;gap:10px;padding:10px 14px}.brand{font-size:17px}
     .modeT{order:3;flex:1 1 100%;justify-content:center}
     .modeT button{padding:7px 16px;font-size:12px}
-    aside{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:62vh;background:rgba(14,20,38,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);border-right:0;z-index:6;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.6);transition:max-height .3s}
-    aside.collapsed{max-height:120px}
-    aside::before{content:"";display:block;width:48px;height:4px;background:#2a3a64;border-radius:3px;margin:8px auto 0;cursor:grab}
-    main{height:calc(100vh - 56px - 100px);min-height:0}
-    .zoomctl{right:10px;top:auto;bottom:62vh;transform:none}
+    .crow{padding:10px 14px;gap:10px}
+    .cfield select,.cfield input[type=date]{min-width:0;width:100%;font-size:12px;padding:7px 9px}
+    .cfield{flex:1 1 calc(50% - 5px)}
+    .budgetcell{flex:1 1 100%;min-width:0;padding:8px 12px}
+    .csummary{flex:1 1 100%;font-size:11px}
+    aside{grid-column:1;grid-row:3;border-right:0;border-top:1px solid var(--line);max-height:42vh}
+    main{grid-column:1;grid-row:3;height:calc(100vh - 56px - 220px);min-height:0}
+    /* on mobile: map first then list. swap rows via order */
+    #app{grid-template-rows:auto auto 42vh 1fr}
+    main{grid-row:3}
+    aside{grid-row:4;max-height:none}
+    .zoomctl{right:10px;top:auto;bottom:calc(58vh + 14px);transform:none}
     .zoomctl button{width:36px;height:36px;font-size:16px}
     .legend{display:none}
     .tag{top:8px;right:10px;font-size:10px;padding:5px 10px}
     .pad{padding:12px 16px}
-    .scroll{max-height:38vh}
   }
 </style>
 </head>
@@ -171,47 +210,40 @@
     <button class="openhero" id="openhero">✨ Change budget</button>
     <span class="pill loading" id="status">Fetching live prices…</span>
   </div>
+  <!-- horizontal control strip -->
+  <div class="controlbar" id="controls">
+    <div class="crow primary">
+      <div class="cfield"><label>From</label><select id="origin"></select></div>
+      <div class="cfield trip"><label>Trip</label><div class="toggle" id="trip"><button data-t="round" class="on">Round</button><button data-t="oneway">One‑way</button></div></div>
+      <div class="cfield"><label>Depart</label><input type="date" id="depart" value="2026-06-28"></div>
+      <div class="cfield"><label>Return</label><input type="date" id="return" value="2026-07-05"></div>
+      <div class="budgetcell">
+        <div class="bgbox"><label>Budget · <span id="budgetLabel">flight + visa + stay</span></label><div class="bigval">₹<span id="budgetVal">—</span><small>or less</small></div></div>
+        <input type="range" id="budget" min="0" max="300000" value="300000" step="1000">
+      </div>
+      <div class="csummary"><b id="cnt">—</b> of <span id="tot">—</span> fit · cheapest <b id="cheapest">—</b></div>
+      <button class="cbtn surprise" id="surprise">🎲 Surprise me</button>
+      <button class="cbtn" id="collapse">Filters ▼</button>
+    </div>
+    <div class="crow advanced" id="filtersBody">
+      <div class="advgroup"><span>Count</span>
+        <label class="chk"><input type="checkbox" data-p="flight" checked><span>✈ Flights</span></label>
+        <label class="chk"><input type="checkbox" data-p="visa" checked><span>🛂 Visa</span></label>
+        <label class="chk"><input type="checkbox" data-p="stay" checked><span>🏨 Stay</span></label>
+      </div>
+      <div class="advgroup"><span id="contLabel">Continent</span><div class="chips" id="continents" style="margin:0"></div></div>
+      <div class="advgroup"><div class="chips" id="filters" style="margin:0">
+        <div class="chip" data-f="visafree">🟢 Visa‑free only</div>
+        <div class="chip" data-f="nonstop">✈ Nonstop only</div>
+        <div class="chip" id="cbChip">👁 Colour‑blind</div>
+      </div></div>
+      <div class="advgroup"><span>Sort</span><div class="toggle" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div></div>
+    </div>
+  </div>
+
+  <!-- left panel: suggestion cards -->
   <aside>
-    <div class="pad">
-      <p class="sub" id="sub">Where can you afford to go — worldwide?</p>
-      <div class="row" style="margin-top:10px">
-        <div><label>From</label><select id="origin"></select></div>
-        <div><label>Trip</label><div class="toggle" id="trip"><button data-t="round" class="on">Round</button><button data-t="oneway">One‑way</button></div></div>
-      </div>
-      <div class="row">
-        <div><label>Depart</label><input type="date" id="depart" value="2026-06-28"></div>
-        <div><label>Return</label><input type="date" id="return" value="2026-07-05"></div>
-      </div>
-    </div>
-
-    <div class="sticky pad" id="controls">
-      <label style="margin-top:0">Budget — <span id="budgetLabel">flight + visa + stay</span>, per person</label>
-      <div class="bignum">₹<span id="budgetVal">—</span> <small>or less</small></div>
-      <input type="range" id="budget" min="0" max="300000" value="300000" step="1000">
-      <div class="summary"><b id="cnt">—</b> of <span id="tot">—</span> fit · cheapest <b id="cheapest">—</b></div>
-
-      <div class="fhead"><span>Filters &amp; options</span><button id="collapse">Hide ▲</button></div>
-      <div class="fsum" id="fsum"></div>
-      <div class="filtersBody" id="filtersBody">
-        <button class="surprise" id="surprise">🎲 Surprise me — a place I can afford</button>
-        <label style="margin-top:12px">Count toward budget — pick what matters</label>
-        <div class="parts" id="parts">
-          <label class="chk"><input type="checkbox" data-p="flight" checked><span>✈ Flights</span></label>
-          <label class="chk"><input type="checkbox" data-p="visa" checked><span>🛂 Visa</span></label>
-          <label class="chk"><input type="checkbox" data-p="stay" checked><span>🏨 Stay</span></label>
-        </div>
-        <label style="margin-top:12px" id="contLabel">Continent</label>
-        <div class="chips" id="continents"></div>
-        <div class="chips" id="filters">
-          <div class="chip" data-f="visafree">🟢 Visa‑free only</div>
-          <div class="chip" data-f="nonstop">✈ Nonstop only</div>
-          <div class="chip" id="cbChip">👁 Colour‑blind</div>
-        </div>
-        <label style="margin-top:12px">Sort by</label>
-        <div class="toggle" id="sort"><button data-s="cheap" class="on">Cheapest</button><button data-s="visa">Easiest visa</button><button data-s="fast">Fastest</button></div>
-      </div>
-    </div>
-
+    <div class="listHeader"><h3 id="listTitle">Suggestions</h3><span id="listSub">— loading</span></div>
     <div class="scroll pad" id="list"></div>
     <div class="pad" style="border-top:1px solid var(--line)"><p class="disc" id="disc"></p></div>
   </aside>
@@ -420,7 +452,7 @@ const EXTRA_RAW=[
 const EXTRA=EXTRA_RAW.map(r=>({code:r[0],city:r[1],country:r[2],cont:r[3],coord:[r[4],r[5]],base:55000,dur:600,daily:r[7],visa:VISA_BY_COUNTRY[r[6]]||vz("evisa",3000,"varies",85,"Check official site.")}));
 const EXTRA_SET=new Set(EXTRA.map(d=>d.code));
 
-let state={mode:"intl",origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:true,autoCollapsed:false,prevRet:"2026-07-05",visited:new Set(),live:{flights:{},hotels:{},status:"loading"}};
+let state={mode:"intl",origin:"DEL",depart:"2026-06-28",ret:"2026-07-05",trip:"round",budget:300000,sort:"cheap",visafree:false,nonstop:false,cont:"all",cb:false,parts:{flight:true,visa:true,stay:true},open:new Set(),flash:null,filtersOpen:false,autoCollapsed:false,prevRet:"2026-07-05",visited:new Set(),live:{flights:{},hotels:{},status:"loading"}};
 const POOL=()=>state.mode==="dom"?DOM_DEST:DEST.concat(EXTRA);
 
 const svg=d3.select("#map"),W=1000,H=720;
@@ -551,7 +583,9 @@ function render(){
   const N=nights();const lbl=[];if(state.parts.flight)lbl.push("flight");if(state.parts.visa)lbl.push("visa");if(state.parts.stay&&N>0)lbl.push(N+"‑night stay");
   document.getElementById("budgetLabel").textContent=lbl.length?lbl.join(" + "):"nothing selected";
   document.getElementById("tag").textContent=(state.trip==="round"?"round trip":"one way")+" · "+nights()+" nights · "+fmtDate(state.depart);
-  document.getElementById("fsum").innerHTML=`${state.cont==="all"?"🌍 All":state.cont} · ${["flight","visa","stay"].filter(p=>state.parts[p]).map(p=>({flight:"✈",visa:"🛂",stay:"🏨"}[p])).join("")||"—"} · ${ {cheap:"Cheapest",visa:"Easiest visa",fast:"Fastest"}[state.sort]}${state.visafree?" · visa‑free":""}${state.nonstop?" · nonstop":""}`;
+  const lt=document.getElementById("listTitle"),ls=document.getElementById("listSub");
+  if(lt)lt.textContent=state.mode==="dom"?"In India":(state.cont==="all"?"Worldwide":state.cont);
+  if(ls)ls.innerHTML=`<b style="color:var(--ink)">${fits.length}</b> within budget · ${ {cheap:"cheapest first",visa:"easiest visa",fast:"fastest"}[state.sort]}`;
 
   gArc.selectAll("path").data(data,d=>d.code).join(
     e=>e.append("path").attr("class","arc flow").attr("d",d=>arcPath(o.coord,d.coord)),
@@ -617,13 +651,13 @@ function drawList(data){
         <div class="vbox" style="margin-top:8px"><div class="k">Approval probability <span style="float:right;color:${pcol(d.visa.approval)}">${d.visa.approval}%</span></div><div class="pbar"><i style="width:${d.visa.approval}%;background:${pcol(d.visa.approval)}"></i></div></div>
         <div class="vnote">${d.visa.note} <a href="#" onclick="return false">Official site ›</a></div>`}
       </div>`;
-    card.querySelector(".chead").onclick=()=>{state.open.has(d.code)?state.open.delete(d.code):state.open.add(d.code);state.flash=null;if(!state.autoCollapsed){state.autoCollapsed=true;state.filtersOpen=false;applyCollapse();}render();};
+    card.querySelector(".chead").onclick=()=>{state.open.has(d.code)?state.open.delete(d.code):state.open.add(d.code);state.flash=null;render();};
     list.appendChild(card);
     if(state.flash===d.code)setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"center"}),50);
   });
 }
 function fmtDate(s){const d=new Date(s);return d.toLocaleDateString("en-IN",{day:"numeric",month:"short"})}
-function applyCollapse(){document.getElementById("controls").classList.toggle("collapsed",!state.filtersOpen);document.getElementById("collapse").textContent=state.filtersOpen?"Hide ▲":"Edit ▼";}
+function applyCollapse(){document.getElementById("filtersBody").classList.toggle("open",state.filtersOpen);document.getElementById("collapse").textContent=state.filtersOpen?"Filters ▲":"Filters ▼";}
 
 // controls
 function applyMode(){
@@ -640,8 +674,19 @@ function applyMode(){
 }
 document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{if(state.mode===b.dataset.m)return;state.mode=b.dataset.m;state.open=new Set();state.flash=null;state.budget=9e9;applyMode();render();fitToData();loadLive();});
 document.getElementById("origin").onchange=e=>{state.origin=e.target.value;state.budget=9e9;render();loadLive()};
-document.getElementById("depart").onchange=e=>{state.depart=e.target.value;render();loadLive()};
-document.getElementById("return").onchange=e=>{state.ret=e.target.value;render();loadLive()};
+// Date constraints — no past dates, return >= depart
+const _dep=document.getElementById("depart"),_ret=document.getElementById("return");
+const _todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function syncDateBounds(){
+  const today=_todayISO();
+  _dep.min=today;
+  if(state.depart<today){state.depart=today;_dep.value=today;}
+  _ret.min=state.depart||today;
+  if(state.ret && state.ret<_ret.min){state.ret=_ret.min;_ret.value=state.ret;}
+}
+syncDateBounds();
+_dep.onchange=e=>{state.depart=e.target.value;syncDateBounds();render();loadLive()};
+_ret.onchange=e=>{state.ret=e.target.value;syncDateBounds();render();loadLive()};
 document.getElementById("budget").oninput=e=>{state.budget=+e.target.value;render()};
 function syncParts(){document.querySelectorAll("#parts input").forEach(c=>{c.checked=!!state.parts[c.dataset.p];c.closest(".chk").classList.toggle("off",!c.checked);});}
 document.querySelectorAll("#trip button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trip button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.trip=b.dataset.t;state.budget=9e9;const r=document.getElementById("return");if(state.trip==="oneway"){if(state.ret)state.prevRet=state.ret;r.value="";r.disabled=true;state.ret="";state.prevParts={...state.parts};state.parts={flight:true,visa:false,stay:false};}else{r.disabled=false;r.value=state.prevRet||"2026-07-05";state.ret=r.value;state.parts=state.prevParts?{...state.prevParts}:{flight:true,visa:true,stay:true};}syncParts();render();loadLive();});
